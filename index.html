@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Truck Audit Utility</title>
+  <meta name="theme-color" content="#0b2a6f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img id="brandLogo" src="logo.png" alt="Logo" />
+      <div class="titles">
+        <div class="appname">Truck Audit Utility</div>
+        <div class="subtitle">Scan serials • Compare to inventory • Copy missing</div>
+      </div>
+    </div>
+    <button id="installBtn" class="ghost" hidden>Add to Home Screen</button>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>1) Choose a mode</h2>
+      <div class="modeRow">
+        <button id="modeAuditBtn" class="primary">Truck Audit (Upload Excel)</button>
+        <button id="modeQuickBtn" class="secondary">Quick Scan (No Excel)</button>
+      </div>
+      <p class="hint">Works offline <em>after</em> the first load. For best results, keep the correction form open in another tab.</p>
+    </section>
+
+    <section id="auditSection" class="card" hidden>
+      <h2>2) Upload inventory Excel</h2>
+      <div class="row">
+        <label class="fileLabel">
+          <input id="excelFile" type="file" accept=".xlsx,.xls" />
+          <span>Select Excel file</span>
+        </label>
+        <div id="fileMeta" class="meta"></div>
+      </div>
+      <div id="colPicker" class="row" hidden>
+        <div class="field">
+          <label>Serial column</label>
+          <select id="serialCol"></select>
+        </div>
+        <div class="field">
+          <label>Part column (optional)</label>
+          <select id="partCol"></select>
+        </div>
+      </div>
+      <div id="expectedSummary" class="meta"></div>
+    </section>
+
+    <section id="scanSection" class="card" hidden>
+      <h2>3) Scan</h2>
+      <div class="row">
+        <button id="startScan" class="primary">Start Scanning</button>
+        <button id="stopScan" class="ghost" disabled>Stop</button>
+        <button id="flashBtn" class="ghost" hidden>Flash</button>
+      </div>
+
+      <div class="statusGrid">
+        <div class="stat"><div class="k">Expected</div><div id="statExpected" class="v">0</div></div>
+        <div class="stat"><div class="k">Matched</div><div id="statMatched" class="v">0</div></div>
+        <div class="stat"><div class="k">Missing</div><div id="statMissing" class="v">0</div></div>
+        <div class="stat"><div class="k">Extra</div><div id="statExtra" class="v">0</div></div>
+        <div class="stat"><div class="k">Duplicates</div><div id="statDup" class="v">0</div></div>
+      </div>
+
+      <div id="banner" class="banner" hidden></div>
+
+      <div class="videoWrap">
+        <video id="video" muted playsinline></video>
+      </div>
+
+      <div class="row">
+        <div class="field grow">
+          <label>Manual add (rare)</label>
+          <input id="manualSerial" placeholder="Enter serial and tap Add" autocomplete="off" />
+        </div>
+        <button id="addManual" class="secondary">Add</button>
+      </div>
+
+      <div class="row">
+        <button id="copyNextMissing" class="primary" disabled>Copy Next Missing</button>
+        <button id="copyAllMissing" class="secondary" disabled>Copy All Missing</button>
+        <button id="copyAllScanned" class="secondary" disabled>Copy Scanned List</button>
+      </div>
+
+      <details class="results">
+        <summary>Show details</summary>
+        <div class="cols">
+          <div>
+            <h3>Missing</h3>
+            <div id="missingList" class="list"></div>
+          </div>
+          <div>
+            <h3>Extra</h3>
+            <div id="extraList" class="list"></div>
+          </div>
+          <div>
+            <h3>Scanned (unique)</h3>
+            <div id="scannedList" class="list"></div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Tips</h2>
+      <ul class="bullets">
+        <li>Scan any barcode or QR on the item/box — the app stores the serial in <strong>UPPERCASE</strong>.</li>
+        <li>If you scan the same item twice, you’ll see <strong>Serial Already Scanned</strong>, but you can keep going.</li>
+        <li>In audit mode, the missing list is <em>Expected minus Scanned</em>. Extras are shown but not pushed into the form flow.</li>
+      </ul>
+    </section>
+
+    <footer class="foot">
+      <span>v0.1 MVP • built for fast field use</span>
+    </footer>
+  </main>
+
+  <!-- Libs (cached by service worker after first load) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

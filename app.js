@@ -311,11 +311,18 @@
     const deviceId = (devices && devices.length) ? devices[0].deviceId : undefined;
 
     scanner = new ZXingBrowser.BrowserMultiFormatReader();
-    await scanner.decodeFromVideoDevice(deviceId, video, (result, err)=>{
-      if(result){
-        onSerialScanned(result.getText());
-      }
-    });
+
+let hasScanned = false;
+
+await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
+  if (result && !hasScanned) {
+    hasScanned = true;
+    onSerialScanned(result.getText());
+
+    // stop continuous scanning after ONE successful read
+    try { scanner.reset(); } catch (e) {}
+  }
+});
 
     try{
       const stream = video.srcObject;

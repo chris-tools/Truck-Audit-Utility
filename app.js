@@ -17,6 +17,9 @@
   const flashBtn = $('flashBtn');
   const video = $('video');
   const banner = $('banner');
+  
+  let stream = null;
+  let streamTrack = null;
 
   const statExpected = $('statExpected');
   const statMatched = $('statMatched');

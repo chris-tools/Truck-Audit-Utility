@@ -362,17 +362,38 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
     }catch(_){}
   }
 
-  async function stopCamera(){
-    try{
-      if(scanner) scanner.reset();
-      if(streamTrack) streamTrack.stop();
-    }catch(_){}
-    scanner = null;
-    streamTrack = null;
+  async function stopCamera() {
+  try {
+    // Stop all camera tracks
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+
+    // Reset scanner
+    if (scanner) {
+      scanner.reset();
+      scanner = null;
+    }
+
+    // Reset flashlight state
     torchSupported = false;
     torchOn = false;
     flashBtn.hidden = true;
+
+    // iOS Safari fix: fully release the video element
+    video.pause();
+    video.srcObject = null;
+    video.removeAttribute('src');
+    video.load();
+
+    streamTrack = null;
+
+  } catch (e) {
+    console.warn('stopCamera error', e);
   }
+}
+
 
   startScan.addEventListener('click', async ()=>{
     armed = true;

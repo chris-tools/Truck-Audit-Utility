@@ -327,7 +327,9 @@
 
   streamTrack = stream.getVideoTracks()[0];
     const devices = await ZXingBrowser.BrowserMultiFormatReader.listVideoInputDevices();
-    const deviceId = (devices && devices.length) ? devices[0].deviceId : undefined;
+    const deviceId = (devices && devices.length)
+    ? (devices.find(d => /back|rear|environment/i.test(d.label)) || devices[devices.length - 1]).deviceId
+    : undefined;
 
     scanner = new ZXingBrowser.BrowserMultiFormatReader();
 

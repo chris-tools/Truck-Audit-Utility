@@ -15,6 +15,7 @@
   const startScan = $('startScan');
   const stopScan = $('stopScan');
   const flashBtn = $('flashBtn');
+  const finishedScan = $('finishedScan');
   const video = $('video');
   const banner = $('banner');
   

@@ -376,6 +376,7 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
 
   startScan.addEventListener('click', async ()=>{
     armed = true;
+    finishedScan.disabled = false;
     startScan.disabled = true;
     stopScan.disabled = false;
     try{
@@ -390,6 +391,7 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
 
   stopScan.addEventListener('click', async ()=>{
     await stopCamera();
+    finishedScan.disabled = true;
     startScan.disabled = false;
     stopScan.disabled = true;
     setBanner('ok', 'Camera stopped');

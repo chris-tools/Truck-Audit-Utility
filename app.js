@@ -314,14 +314,14 @@
   async function startCamera(){
     // Ask for a sharper rear-camera stream (helps with small barcodes)
   stream = await navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: {
-      facingMode: { ideal: "environment" }, // rear camera
-      width:  { ideal: 1280 },
-      height: { ideal: 720 }
-      frameRate: { ideal: 30, max: 30 }
-    }
-  });
+  audio: false,
+  video: {
+    facingMode: { ideal: "environment" },
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+    frameRate: { ideal: 30, max: 30 }
+  }
+});
 
   video.srcObject = stream;
   video.setAttribute("playsinline", "true");

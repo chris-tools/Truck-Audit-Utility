@@ -15,6 +15,8 @@
   const startScan = $('startScan');
   const stopScan = $('stopScan');
   const flashBtn = $('flashBtn');
+  const zoomWrap = document.getElementById('zoomWrap');
+  const zoomSlider = document.getElementById('zoomSlider');
   const finishedScan = $('finishedScan');
   const video = $('video');
   const banner = $('banner');
@@ -404,6 +406,7 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
     stopScan.disabled = false;
     try{
       await startCamera();
+      zoomWrap.hidden = false;
       setBanner('ok', 'Camera started');
     }catch(e){
       setBanner('bad', 'Camera error: ' + e.message);
@@ -423,8 +426,9 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
   finishedScan.addEventListener('click', async () => {
   armed = false;
   lastText = null;
-    
   await stopCamera();
+  zoomWrap.hidden = true;
+
 
   startScan.disabled = false;
   stopScan.disabled = true;

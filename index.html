@@ -54,12 +54,7 @@
 
     <section id="scanSection" class="card" hidden>
       <h2>3) Scan</h2>
-      <div class="row">
-        <button id="startScan" class="primary">Start Scanning</button>
-        <button id="stopScan" class="ghost" disabled>Stop</button>
-        <button id="flashBtn" class="ghost" hidden>Flash</button>
-        <button id="finishedScan" class="secondary">Finished Scanning</button>
-      </div>
+      
       <label id="zoomWrap" class="zoomWrap" hidden>
   Zoom
   <input id="zoomSlider" type="range" min="1" max="1" step="0.1" value="1">
@@ -78,10 +73,14 @@
 
       <div class="videoWrap">
         <video id="video" autoplay playsinline></video>
-
-  <!-- Scan guide overlay (does not block taps) -->
-  <div class="scanGuide" aria-hidden="true"></div>
+        <div class="scanGuide" aria-hidden="true"></div>
 </div>
+      <div class="row">
+        <button id="startScan" class="primary">Start Scanning</button>
+        <button id="stopScan" class="ghost" disabled>Stop</button>
+        <button id="flashBtn" class="ghost" hidden>Flash</button>
+        <button id="finishedScan" class="secondary">Finished Scanning</button>
+      </div>
 
       <div class="row">
         <div class="field grow">

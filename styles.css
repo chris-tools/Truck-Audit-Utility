@@ -21,10 +21,19 @@ h3{margin:12px 0 8px 0;font-size:14px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .modeRow{display:flex;gap:10px;flex-wrap:wrap}
 button{border:1px solid transparent;border-radius:12px;padding:12px 14px;font-weight:700;cursor:pointer}
-button.primary{background:var(--blue2);color:white}
+button.primary{
+  background:var(--blue2);
+  color:white}
 button.secondary{background:#eef2ff;border-color:#dbe3ff;color:#1f2a44}
 button.ghost{background:transparent;border-color:rgba(255,255,255,.35);color:white}
 button:disabled{opacity:.45;cursor:not-allowed}
+.bigPrimary{
+  padding:20px 22px;
+  font-size:20px;
+  border-radius:16px;
+  width:100%;
+}
+
 .hint{color:var(--muted);margin:10px 0 0 0;font-size:13px}
 .meta{color:var(--muted);font-size:13px}
 .fileLabel{border:1px dashed #cbd5e1;border-radius:12px;padding:12px 14px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}

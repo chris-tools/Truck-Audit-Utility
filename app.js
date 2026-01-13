@@ -1,6 +1,28 @@
 (function(){
   const $ = (id)=>document.getElementById(id);
+  function hapticSuccess() {
+  // iOS / modern mobile
+  if (navigator.vibrate) {
+    navigator.vibrate(30);
+  }
 
+  // Optional tiny "tick" sound (safe fallback)
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.value = 880; // subtle "tick"
+    gain.gain.value = 0.03;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.03);
+  } catch (_) {}
+}
   const modeAuditBtn = $('modeAuditBtn');
   const modeQuickBtn = $('modeQuickBtn');
   const auditSection = $('auditSection');
@@ -191,14 +213,15 @@
         matchedCount += 1;
         const p = expected.get(s)?.part;
         setBanner('ok', p ? ('Expected: ' + s + ' • ' + p) : ('Expected: ' + s));
+        hapticSuccess();
       } else {
         extras.add(s);
         setBanner('warn', 'Extra (not on list): ' + s);
       }
     } else {
       setBanner('ok', 'Added: ' + s);
+      hapticSuccess();
     }
-
     updateUI();
   }
 

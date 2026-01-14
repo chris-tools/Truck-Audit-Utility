@@ -567,7 +567,6 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
     window.addEventListener('load', ()=>{
       navigator.serviceWorker.register('sw.js').catch(()=>{});
     });
-  }
 
   setBanner('ok', 'Choose a mode to begin');
   updateUI();

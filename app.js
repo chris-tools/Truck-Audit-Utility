@@ -1,5 +1,40 @@
 (function(){
   const $ = (id)=>document.getElementById(id);
+
+  let audioCtx = null;
+
+function primeAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+
+function beepTick() {
+  try {
+    primeAudio(); // ensure unlocked
+    if (!audioCtx) return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.05, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.07);
+  } catch (e) {}
+}
+
+  
   function hapticSuccess() {
   // iOS / modern mobile
   if (navigator.vibrate) {
@@ -216,9 +251,11 @@
         hapticSuccess();
       } else {
         extras.add(s);
+        beepTick();
         setBanner('warn', 'Extra (not on list): ' + s);
       }
     } else {
+      beepTick();
       setBanner('ok', 'Added: ' + s);
       hapticSuccess();
     }
@@ -429,6 +466,7 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
 
 
   startScan.addEventListener('click', async ()=>{
+    primeAudio();
     armed = true;
     finishedScan.disabled = false;
     startScan.disabled = true;

@@ -1,15 +1,4 @@
-(function(){
-  const $ = (id)=>document.getElementById(id);
-
-  let audioCtx = null;
-
-function primeAudio() {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-  } catch (e) {}
-}
-
+c
 function beepTick() {
   try {
     primeAudio(); // ensure unlocked
@@ -414,7 +403,7 @@ testBeep.addEventListener('click', () => {
 
 await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
   if (!result) return;
-
+  playBeep();
   const text = result.getText();
 
   // If we already scanned OR it's the same exact text again, ignore it

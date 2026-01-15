@@ -18,7 +18,7 @@ body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Aria
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 14px;margin:12px 0}
 h2{margin:0 0 10px 0;font-size:16px}
 h3{margin:12px 0 8px 0;font-size:14px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:12px}
 .modeRow{display:flex;gap:10px;flex-wrap:wrap}
 button{border:1px solid transparent;border-radius:12px;padding:12px 14px;font-weight:700;cursor:pointer}
 button.primary{

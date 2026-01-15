@@ -507,8 +507,12 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
     }
   });
 
+  if (stopScan) {
   stopScan.addEventListener('click', async ()=>{
     await stopCamera();
+  });
+}
+ 
     finishedScan.disabled = true;
     startScan.disabled = false;
     stopScan.disabled = true;

@@ -86,6 +86,22 @@ testBeep.addEventListener('click', () => {
   const finishedScan = $('finishedScan');
   const video = $('video');
   const banner = $('banner');
+  flashBtn.addEventListener('click', () => {
+  if (!streamTrack) return;
+
+  const caps = streamTrack.getCapabilities();
+  if (!caps.torch) {
+    setBanner('warn', 'Flash not supported on this device');
+    return;
+  }
+
+  const torchOn = streamTrack.getConstraints()?.advanced?.[0]?.torch === true;
+
+  streamTrack.applyConstraints({
+    advanced: [{ torch: !torchOn }]
+  });
+});
+
   
   let stream = null;
   let streamTrack = null;

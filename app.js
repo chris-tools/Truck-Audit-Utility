@@ -1,4 +1,14 @@
 (function(){
+  const $ = (id)=>document.getElementById(id);
+
+  let audioCtx = null;
+
+function primeAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
 
 function beepTick() {
   try {
@@ -404,7 +414,7 @@ testBeep.addEventListener('click', () => {
 
 await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
   if (!result) return;
-  playBeep();
+
   const text = result.getText();
 
   // If we already scanned OR it's the same exact text again, ignore it
@@ -568,6 +578,7 @@ await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
     window.addEventListener('load', ()=>{
       navigator.serviceWorker.register('sw.js').catch(()=>{});
     });
+  }
 
   setBanner('ok', 'Choose a mode to begin');
   updateUI();

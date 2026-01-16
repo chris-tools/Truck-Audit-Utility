@@ -49,6 +49,7 @@
   let streamTrack = null;
   let torchSupported = false;
   let torchOn = false;
+  let zoomSupported = false;
 
   function setBanner(kind, text){
     banner.hidden = false;
@@ -323,7 +324,20 @@
         streamTrack = stream.getVideoTracks()[0];
         const caps = streamTrack.getCapabilities ? streamTrack.getCapabilities() : {};
         torchSupported = !!caps.torch;
-        flashBtn.hidden = !torchSupported;
+        flashBtn.hidden = false;
+        flashBtn.disabled = !torchSupported;
+        flashBtn.textContent = torchSupported ? 'Light' : 'Light (N/A)';
+
+        // Default zoom: if the device supports it, gently zoom in to help barcode reading.
+        zoomSupported = typeof caps.zoom === 'object' && caps.zoom !== null;
+        if(zoomSupported){
+          const minZ = Number(caps.zoom.min ?? 1);
+          const maxZ = Number(caps.zoom.max ?? 1);
+          const target = Math.min(maxZ, Math.max(minZ, 2)); // aim for ~2x without exceeding caps
+          try{
+            await streamTrack.applyConstraints({advanced:[{zoom: target}]});
+          }catch(_){/* ignore */}
+        }
       }
     }catch(_){}
   }
@@ -331,17 +345,29 @@
   async function stopCamera(){
     try{
       if(scanner) scanner.reset();
-      if(streamTrack) streamTrack.stop();
+      if(streamTrack){
+        // Ensure torch is off before stopping.
+        if(torchSupported && torchOn){
+          try{ await streamTrack.applyConstraints({advanced:[{torch: false}]}); }catch(_){/* ignore */}
+        }
+        streamTrack.stop();
+      }
     }catch(_){}
     scanner = null;
     streamTrack = null;
     torchSupported = false;
     torchOn = false;
-    flashBtn.hidden = true;
+    zoomSupported = false;
+    flashBtn.hidden = false;
+    flashBtn.disabled = true;
+    flashBtn.textContent = 'Light';
+    flashBtn.classList.remove('on');
   }
 
   startScan.addEventListener('click', async ()=>{
+    const originalLabel = startScan.textContent;
     startScan.disabled = true;
+    startScan.textContent = 'Scanning…';
     stopScan.disabled = false;
     try{
       await startCamera();
@@ -349,6 +375,7 @@
     }catch(e){
       setBanner('bad', 'Camera error: ' + e.message);
       startScan.disabled = false;
+      startScan.textContent = originalLabel;
       stopScan.disabled = true;
     }
   });
@@ -356,18 +383,24 @@
   stopScan.addEventListener('click', async ()=>{
     await stopCamera();
     startScan.disabled = false;
+    startScan.textContent = 'Scan';
     stopScan.disabled = true;
-    setBanner('ok', 'Camera stopped');
+    setBanner('ok', 'Finished');
   });
 
   flashBtn.addEventListener('click', async ()=>{
-    if(!streamTrack || !torchSupported) return;
+    if(!streamTrack) return;
+    if(!torchSupported){
+      setBanner('warn', 'Light not available on this device');
+      return;
+    }
     torchOn = !torchOn;
     try{
       await streamTrack.applyConstraints({advanced:[{torch: torchOn}]});
-      flashBtn.textContent = torchOn ? 'Flash On' : 'Flash';
+      flashBtn.textContent = torchOn ? 'Light On' : 'Light';
+      flashBtn.classList.toggle('on', torchOn);
     }catch(e){
-      setBanner('warn', 'Flash not available');
+      setBanner('warn', 'Light not available');
     }
   });
 

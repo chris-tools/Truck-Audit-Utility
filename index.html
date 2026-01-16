@@ -54,10 +54,10 @@
 
     <section id="scanSection" class="card" hidden>
       <h2>3) Scan</h2>
-      <div class="row">
-        <button id="startScan" class="primary">Start Scanning</button>
-        <button id="stopScan" class="ghost" disabled>Stop</button>
-        <button id="flashBtn" class="ghost" hidden>Flash</button>
+      <div class="row scanControls">
+        <button id="startScan" class="primary bigAction">Scan</button>
+        <button id="flashBtn" class="ghost lightBtn" disabled>Light</button>
+        <button id="stopScan" class="secondary" disabled>Finished</button>
       </div>
 
       <div class="statusGrid">
@@ -72,6 +72,7 @@
 
       <div class="videoWrap">
         <video id="video" muted playsinline></video>
+        <div class="scanGuide" aria-hidden="true"></div>
       </div>
 
       <div class="row">

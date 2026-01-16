@@ -1,4 +1,15 @@
-c
+(function(){
+  const $ = (id)=>document.getElementById(id);
+
+  let audioCtx = null;
+
+function primeAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+
 function beepTick() {
   try {
     primeAudio(); // ensure unlocked
@@ -75,6 +86,22 @@ testBeep.addEventListener('click', () => {
   const finishedScan = $('finishedScan');
   const video = $('video');
   const banner = $('banner');
+  flashBtn.addEventListener('click', () => {
+  if (!streamTrack) return;
+
+  const caps = streamTrack.getCapabilities();
+  if (!caps.torch) {
+    setBanner('warn', 'Flash not supported on this device');
+    return;
+  }
+
+  const torchOn = streamTrack.getConstraints()?.advanced?.[0]?.torch === true;
+
+  streamTrack.applyConstraints({
+    advanced: [{ torch: !torchOn }]
+  });
+});
+
   
   let stream = null;
   let streamTrack = null;
@@ -403,7 +430,7 @@ testBeep.addEventListener('click', () => {
 
 await scanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
   if (!result) return;
-  playBeep();
+
   const text = result.getText();
 
   // If we already scanned OR it's the same exact text again, ignore it

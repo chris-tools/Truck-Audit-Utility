@@ -54,11 +54,6 @@
 
     <section id="scanSection" class="card" hidden>
       <h2>3) Scan</h2>
-      <div class="row scanControls">
-        <button id="startScan" class="primary bigAction">Scan</button>
-        <button id="flashBtn" class="ghost lightBtn" disabled>Light</button>
-        <button id="stopScan" class="secondary" disabled>Finished</button>
-      </div>
 
       <div class="statusGrid">
         <div class="stat"><div class="k">Expected</div><div id="statExpected" class="v">0</div></div>
@@ -73,6 +68,13 @@
       <div class="videoWrap">
         <video id="video" muted playsinline></video>
         <div class="scanGuide" aria-hidden="true"></div>
+      </div>
+
+      <!-- Controls live *below* the camera, so the preview stays the focus -->
+      <div class="row scanControls">
+        <button id="startScan" class="primary bigAction">Scan</button>
+        <button id="flashBtn" class="ghost lightBtn" disabled>Flashlight</button>
+        <button id="stopScan" class="secondary" disabled>Finished</button>
       </div>
 
       <div class="row">

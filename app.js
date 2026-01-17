@@ -326,7 +326,7 @@
         torchSupported = !!caps.torch;
         flashBtn.hidden = false;
         flashBtn.disabled = !torchSupported;
-        flashBtn.textContent = torchSupported ? 'Light' : 'Light (N/A)';
+        flashBtn.textContent = torchSupported ? 'Flashlight' : 'Flashlight (N/A)';
 
         // Default zoom: if the device supports it, gently zoom in to help barcode reading.
         zoomSupported = typeof caps.zoom === 'object' && caps.zoom !== null;
@@ -360,7 +360,7 @@
     zoomSupported = false;
     flashBtn.hidden = false;
     flashBtn.disabled = true;
-    flashBtn.textContent = 'Light';
+    flashBtn.textContent = 'Flashlight';
     flashBtn.classList.remove('on');
   }
 
@@ -391,16 +391,16 @@
   flashBtn.addEventListener('click', async ()=>{
     if(!streamTrack) return;
     if(!torchSupported){
-      setBanner('warn', 'Light not available on this device');
+      setBanner('warn', 'Flashlight not available on this device');
       return;
     }
     torchOn = !torchOn;
     try{
       await streamTrack.applyConstraints({advanced:[{torch: torchOn}]});
-      flashBtn.textContent = torchOn ? 'Light On' : 'Light';
+      flashBtn.textContent = torchOn ? 'Flashlight On' : 'Flashlight';
       flashBtn.classList.toggle('on', torchOn);
     }catch(e){
-      setBanner('warn', 'Light not available');
+      setBanner('warn', 'Flashlight not available');
     }
   });
 

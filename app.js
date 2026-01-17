@@ -373,20 +373,26 @@
 
     scanner = new ZXingBrowser.BrowserMultiFormatReader();
     await scanner.decodeFromVideoDevice(deviceId, video, (result, err)=>{
-        armed = false;
-    hasScannedOnce = true;
-    if(armTimeoutId){ clearTimeout(armTimeoutId); armTimeoutId = null; }
+  // Only act on a real decode result, and only when the user has armed scanning
+  if(!result || !armed) return;
 
-    scanSuccessSound();
-    onSerialScanned(result.getText());
+  // One-scan-per-click: accept first result, then disarm until the user taps Scan Next.
+  armed = false;
+  hasScannedOnce = true;
+  if(armTimeoutId){ clearTimeout(armTimeoutId); armTimeoutId = null; }
 
-    // NEW: shut the camera off after a successful scan
-    stopCamera().then(()=>{
-      startScan.disabled = false;
-      startScan.textContent = 'Scan Next';
-      stopScan.disabled = true; // camera is off, so "Finished" isn't needed until you start again
-      setBanner('ok', 'Scan saved — camera off');
-    });
+  scanSuccessSound();
+  onSerialScanned(result.getText());
+
+  // Shut the camera off after a successful scan
+  stopCamera().then(()=>{
+    startScan.disabled = false;
+    startScan.textContent = 'Scan Next';
+    stopScan.disabled = true;
+    setBanner('ok', 'Scan saved — camera off');
+  });
+});
+
 
         // One-scan-per-click: accept first result, then disarm until the user taps Scan Next.
         armed = false;
@@ -447,8 +453,6 @@ async function stopCamera(){
 
     // Detach stream from video element (important for releasing camera)
     if(video) video.srcObject = null;
-    
-        // Extra nudge for some mobile browsers
     try{ video.pause(); }catch(_){}
     try{ video.removeAttribute('src'); }catch(_){}
     try{ video.load(); }catch(_){}

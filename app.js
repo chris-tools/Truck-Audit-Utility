@@ -103,10 +103,9 @@
   }
 
   function scanSuccessSound(){
-    // Distinct, loud double-tone.
-    beep(1046, 110, 1.0);
-    setTimeout(()=>beep(784, 90, 1.0), 90);
-  }
+  beep(2000, 180, 1.0);     // sharp confirmation
+  setTimeout(() => beep(1200, 140, 1.0), 190); // softer tail
+}
 
   function setBanner(kind, text){
     banner.hidden = false;

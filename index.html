@@ -22,6 +22,43 @@
 
   <main class="container">
     <section class="card">
+      <div class="card">
+  <details class="howto">
+    <summary><strong>How to Audit</strong> (tap to expand)</summary>
+
+    <div class="howto-body">
+      <h3>Truck Audit Instructions</h3>
+      <ol>
+        <li>Tap <strong>Truck Audit (Excel)</strong> or <strong>Quick Scan</strong>.</li>
+
+        <li>
+          Tap <strong>Select Excel File</strong>, then choose the file provided by the warehouse employee.
+          You’ll see <strong>“Loaded sheet”</strong> with the number of serials expected.
+        </li>
+
+        <li>
+          Tap the blue <strong>Scan</strong> button and begin scanning items on the truck.
+          <ul>
+            <li>Scan the serial number barcode or QR code on the item or box.</li>
+            <li>Each serial is saved once — duplicates are ignored.</li>
+          </ul>
+        </li>
+
+        <li>
+          Finish scanning when all deployable items have been scanned.
+          <ul>
+            <li>Missing items = Inventory list minus scanned items.</li>
+            <li>Extra items are shown for reference only.</li>
+          </ul>
+        </li>
+
+        <li>
+          <strong>Copy Next Missing</strong> puts the next missing serial on your clipboard so you can paste it into the correction form.
+        </li>
+      </ol>
+    </div>
+  </details>
+</div>
       <h2>1) Choose a mode</h2>
       <div class="modeRow">
         <button id="modeAuditBtn" class="primary">Truck Audit (Upload Excel)</button>
@@ -115,13 +152,16 @@
     </section>
 
     <section class="card">
-      <h2>Tips</h2>
-      <ul class="bullets">
-        <li>Scan any barcode or QR on the item/box — the app stores the serial in <strong>UPPERCASE</strong>.</li>
-        <li>If you scan the same item twice, you’ll see <strong>Serial Already Scanned</strong>, but you can keep going.</li>
-        <li>In audit mode, the missing list is <em>Expected minus Scanned</em>. Extras are shown but not pushed into the form flow.</li>
-      </ul>
-    </section>
+  <h2>Quick Steps</h2>
+
+  <ol class="steps">
+    <li><strong>Choose a mode:</strong> Truck Audit (Excel) or Quick Scan</li>
+    <li><strong>Load inventory (Audit):</strong> Select Excel File → confirm “Loaded sheet”</li>
+    <li><strong>Scan items:</strong> Tap Scan → scan each item once</li>
+    <li><strong>Finish:</strong> Missing = expected − scanned • Extras shown for reference</li>
+    <li><strong>Report missing:</strong> Copy Next Missing → paste into correction form</li>
+  </ol>
+</section>
 
     <footer class="foot">
       <span>v0.1 MVP • built for fast field use</span>

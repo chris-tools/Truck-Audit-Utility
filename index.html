@@ -108,38 +108,26 @@
       </div>
 
       <!-- Controls live *below* the camera, so the preview stays the focus -->
-      <div class="row scanControls">
-        <button id="startScan" class="primary bigAction">Scan</button>
-        <button id="flashBtn" class="ghost lightBtn" disabled>Flashlight</button>
-        <button id="stopScan" class="secondary" disabled>Finished</button>
-      </div>
-
-      <div class="row manualRow">
-        <div class="field grow">
-          <label>Manual add (rare)</label>
-          <input id="manualSerial" placeholder="Enter serial and tap Add" autocomplete="off" />
-        </div>
-        <button id="addManual" class="secondary">Add</button>
-      </div>
-
       <div class="row">
-        <button id="copyNextMissing" class="primary" disabled>Copy Next Missing</button>
-        <button id="copyAllMissing" class="secondary" disabled>Copy All Missing</button>
-        <button id="copyAllScanned" class="secondary" disabled>Copy Scanned List</button>
-      </div>
+  <button id="copyNextMissing" class="primary" disabled>Copy Next Missing</button>
+  <button id="copyAllMissing" class="secondary" disabled>Copy All Missing</button>
+  <button id="copyAllScanned" class="secondary" disabled>Copy Scanned List</button>
+</div>
 
-      <details class="results">
-        <summary>Show details</summary>
+<details class="results">
+  <summary>Show details</summary>
 
   <div class="cols">
     <div>
       <h3>Found</h3>
       <div id="scannedList" class="list"></div>
     </div>
+
     <div>
       <h3>Missing</h3>
       <div id="missingList" class="list"></div>
     </div>
+
     <div>
       <h3>Extra</h3>
       <div id="extraList" class="list"></div>

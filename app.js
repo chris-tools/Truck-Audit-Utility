@@ -213,6 +213,8 @@ alert("APP.JS LOADED - 20260120");
   }
 
   function copyText(txt){
+    alert('copyText() was called');
+
   // 1) Sync copy FIRST (best compatibility during a button click)
   try{
     const ta = document.createElement('textarea');

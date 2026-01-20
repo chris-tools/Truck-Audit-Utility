@@ -581,9 +581,10 @@ startScan.addEventListener('click', async ()=>{
   });
 
   copyAllScanned.addEventListener('click', ()=>{
-    const arr = Array.from(scanned).sort();
-    copyText(arr.join('\n'));
-  });
+  setBanner('warn', 'Copy button clicked');
+  const arr = Array.from(scanned).sort();
+  copyText(arr.join('\n'));
+});
 
   copyAllMissing.addEventListener('click', ()=>{
     if(mode !== 'audit') return;

@@ -587,12 +587,13 @@ startScan.addEventListener('click', async ()=>{
     }
   });
 
-  copyAllScanned.addEventListener('click', ()=>{
-  alert('Copy Scanned List clicked');
+  copyAllScanned.addEventListener('click', (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+
   const arr = Array.from(scanned).sort();
   copyText(arr.join('\n'));
 });
-
 
   copyAllMissing.addEventListener('click', ()=>{
     if(mode !== 'audit') return;

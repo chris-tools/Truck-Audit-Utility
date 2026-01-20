@@ -110,17 +110,31 @@
       </div>
 
       <!-- Controls live *below* the camera, so the preview stays the focus -->
-      <div class="row scanControls">
+    <div class="row scanControls">
   <button id="startScan" class="primary bigAction">Scan</button>
   <button id="flashBtn" class="ghost lightBtn" disabled>Flashlight</button>
   <button id="stopScan" class="secondary" disabled>Finished</button>
 </div>
 
-      <div class="row">
+<!-- MANUAL SERIAL GOES HERE -->
+
+<div class="row">
+  <div class="field" style="flex:1;">
+    <label>Manual serial</label>
+    <input id="manualSerial" type="text" placeholder="Type/paste serial" autocomplete="off" />
+  </div>
+  <button id="addManual" class="secondary" type="button">Add</button>
+</div>
+
+<!-- COPY BUTTONS GO LAST -->
+
+<div class="row">
   <button id="copyNextMissing" type="button" class="small">Copy Next Missing</button>
   <button id="copyAllMissing" type="button" class="small">Copy All Missing</button>
   <button id="copyAllScanned" type="button" class="small full">Copy Scanned List</button>
 </div>
+
+
 
 <details class="results">
   <summary>Show details</summary>

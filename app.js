@@ -1,5 +1,3 @@
-alert("APP.JS LOADED - 20260120");
-
 (function(){
   const $ = (id)=>document.getElementById(id);
 
@@ -32,9 +30,6 @@ alert("APP.JS LOADED - 20260120");
   const copyNextMissing = $('copyNextMissing');
   const copyAllMissing = $('copyAllMissing');
   const copyAllScanned = $('copyAllScanned');
-  
-  alert(copyAllScanned ? 'copyAllScanned FOUND' : 'copyAllScanned NULL');
-
 
   const missingList = $('missingList');
   const extraList = $('extraList');
@@ -216,8 +211,7 @@ alert("APP.JS LOADED - 20260120");
   }
 
   function copyText(txt){
-    alert('copyText() was called');
-
+ 
   // 1) Sync copy FIRST (best compatibility during a button click)
   try{
     const ta = document.createElement('textarea');
@@ -590,8 +584,7 @@ startScan.addEventListener('click', async ()=>{
   copyAllScanned.addEventListener('click', (e)=>{
   e.preventDefault();
   e.stopPropagation();
-    alert('COPY SCANNED HANDLER FIRED');
-
+ 
   const arr = Array.from(scanned).sort();
   copyText(arr.join('\n'));
 });

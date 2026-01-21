@@ -1,5 +1,5 @@
 // Bump cache name when you change any core asset list so phones update reliably.
-const CACHE_NAME = 'truck-audit-utility-v0.2';
+const CACHE_NAME = 'truck-audit-utility-v0.3';
 const APP_ASSETS = [
   './',
   './index.html',

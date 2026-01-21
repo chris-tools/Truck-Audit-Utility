@@ -433,15 +433,24 @@ function looksLikeSerial(s){
   
     await scanner.decodeFromVideoDevice(deviceId, video, (result, err)=>{
   // Only act on a real decode result, and only when the user has armed scanning
-  if(!result || !armed) return;
+if(!result || !armed) return;
 
-  // One-scan-per-click: accept first result, then disarm until the user taps Scan Next.
-  armed = false;
-  hasScannedOnce = true;
-  if(armTimeoutId){ clearTimeout(armTimeoutId); armTimeoutId = null; }
+const rawText = result.getText();
+const cleaned = normalizeSerial(stripControlChars(rawText));
 
-  scanSuccessSound();
-  onSerialScanned(result.getText());
+// If the decode looks like junk, ignore it and KEEP scanning (do not disarm)
+if(!looksLikeSerial(cleaned)){
+  setBanner('warn', 'Unclear scan — hold steadier and try again');
+  return;
+}
+
+// One-scan-per-click: accept first VALID result, then disarm until the user taps Scan Next.
+armed = false;
+hasScannedOnce = true;
+if(armTimeoutId){ clearTimeout(armTimeoutId); armTimeoutId = null; }
+
+scanSuccessSound();
+onSerialScanned(cleaned);
 
   // Shut the camera off after a successful scan
   stopCamera().then(()=>{

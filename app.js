@@ -429,7 +429,22 @@ function looksLikeSerial(s){
 
    scanner = new ZXingBrowser.BrowserMultiFormatReader();
   
-    await scanner.decodeFromVideoDevice(deviceId, video, (result, err)=>{
+    // Ask for a sharper video feed (helps tiny 2D codes a LOT)
+const constraints = {
+  audio: false,
+  video: {
+    deviceId: deviceId ? { exact: deviceId } : undefined,
+    facingMode: deviceId ? undefined : { ideal: 'environment' },
+
+    // High-res request (reliability > battery)
+    width:  { ideal: 1920 },
+    height: { ideal: 1080 },
+    frameRate: { ideal: 30, max: 30 }
+  }
+};
+
+await scanner.decodeFromConstraints(constraints, video, (result, err)=>{
+
   // Only act on a real decode result, and only when the user has armed scanning
 if(!result || !armed) return;
 

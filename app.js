@@ -124,21 +124,21 @@ function stripControlChars(s){
 function looksLikeSerial(s){
   if(!s) return false;
 
-  // Length guard: reject too-short junk and overly long noise
+  // Allow longer 2D payloads
   if(s.length < 7 || s.length > 40) return false;
 
-  // Allow only common serial characters
+  // Allow common serial characters only
   if(!/^[A-Z0-9\-\/]+$/.test(s)) return false;
 
   // Prefer mixed serials (letters + numbers)
   const hasLetter = /[A-Z]/.test(s);
   const hasNumber = /[0-9]/.test(s);
+
   if(hasLetter && hasNumber) return true;
 
-  // If it’s all digits, require it to be long (blocks 6-digit junk)
+  // If numeric-only, require it to be long enough
   if(/^[0-9]+$/.test(s)) return s.length >= 12;
 
-  // All letters only is unlikely; treat as junk
   return false;
 }
 

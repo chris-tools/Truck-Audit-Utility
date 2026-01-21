@@ -122,10 +122,26 @@ function stripControlChars(s){
 }
 
 function looksLikeSerial(s){
-  // Prevent accepting garbage decodes (like "1234")
   if(!s) return false;
-  if(s.length < 8) return false; // adjust later if needed
-  return /^[A-Z0-9\-\/]+$/.test(s);
+
+  // Length guard: reject too-short junk and overly long noise
+  if(s.length < 7 || s.length > 16) return false;
+
+  // Allow only common serial characters
+  if(!/^[A-Z0-9\-\/]+$/.test(s)) return false;
+
+  // Almost always a mix of letters and numbers
+  const hasLetter = /[A-Z]/.test(s);
+  const hasNumber = /[0-9]/.test(s);
+
+  // Accept mixed serials
+  if(hasLetter && hasNumber) return true;
+
+  // If it's all digits or all letters, be stricter (rare but possible)
+  if(/^[0-9]+$/.test(s)) return s.length >= 10;
+  if(/^[A-Z]+$/.test(s)) return s.length >= 10;
+
+  return false;
 }
 
   function resetSession(){

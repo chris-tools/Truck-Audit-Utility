@@ -105,3 +105,10 @@ video{width:100%;height:320px;object-fit:cover}
   .cols{grid-template-columns:1fr}
   video{height:260px}
 }
+/* Make the collapsed "How to Audit" card tighter */
+.howto summary{
+  padding: 0;
+}
+.howto[open] summary{
+  padding-bottom: 8px;
+}

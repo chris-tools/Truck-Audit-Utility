@@ -132,3 +132,8 @@ button:not(:disabled) {
 button:disabled {
   box-shadow: none;
 }
+/* Allow shadow on active / primary buttons */
+button.active,
+button.primary {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
+}

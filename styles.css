@@ -147,7 +147,5 @@ button.primary {
 }
 /* Scan button should always look actionable */
 #startScan {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-}
-
+  box-shadow: 0 7px 21px rgba(0, 0, 0, 0.28);
 }

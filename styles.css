@@ -151,5 +151,5 @@ button.primary {
 }
 /* Truck Audit mode button: always actionable */
 #modeAuditBtn {
-  box-shadow: 0 7px 21px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.28);
 }

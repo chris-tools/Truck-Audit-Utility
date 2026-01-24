@@ -145,3 +145,7 @@ button.primary {
 .modeBtn:disabled {
   box-shadow: none;
 }
+/* Scan button should always look actionable */
+#startScan {
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.18);
+}

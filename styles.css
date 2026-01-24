@@ -149,3 +149,7 @@ button.primary {
 #startScan {
   box-shadow: 0 7px 21px rgba(0, 0, 0, 0.28);
 }
+/* Truck Audit mode button: always actionable */
+#modeAuditBtn {
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.22);
+}

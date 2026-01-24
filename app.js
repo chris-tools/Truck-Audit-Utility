@@ -684,4 +684,15 @@ document.addEventListener('visibilitychange', ()=>{
 
   setBanner('ok', 'Choose a mode to begin');
   updateUI();
+
+/* Reload warning dismiss */
+const reloadWarning = document.getElementById('reloadWarning');
+const dismissWarningBtn = document.querySelector('.dismissWarning');
+
+if(dismissWarningBtn && reloadWarning){
+  dismissWarningBtn.addEventListener('click', () => {
+    reloadWarning.style.display = 'none';
+  });
+}
+
 })();

@@ -137,3 +137,11 @@ button.active,
 button.primary {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
 }
+/* Mode selection buttons (Truck Audit / Quick Scan) */
+.modeBtn {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
+}
+
+.modeBtn:disabled {
+  box-shadow: none;
+}

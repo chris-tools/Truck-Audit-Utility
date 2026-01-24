@@ -164,3 +164,31 @@ button.primary {
 .reloadWarning strong{
   font-weight: 700;
 }
+.reloadWarning{
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  background: rgba(255, 193, 7, 0.12);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dismissWarning{
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 6px;
+}
+.dismissWarning:hover{
+  background: rgba(0,0,0,0.08);
+  border-radius: 6px;
+}

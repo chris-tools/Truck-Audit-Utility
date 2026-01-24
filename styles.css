@@ -141,7 +141,6 @@ button.primary {
 .modeBtn {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
 }
-
 .modeBtn:disabled {
   box-shadow: none;
 }

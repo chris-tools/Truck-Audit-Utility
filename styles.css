@@ -192,3 +192,69 @@ button.primary {
   background: rgba(0,0,0,0.08);
   border-radius: 6px;
 }
+/* ===== TAU CONSTRUCTION BANNER : BEGIN ===== */
+#tauConstructionBanner{
+  position: sticky;
+  top: 0;
+  z-index: 10000;
+
+  padding: 12px 12px;
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+
+  background: repeating-linear-gradient(
+    45deg,
+    #ffc107,
+    #ffc107 12px,
+    #000 12px,
+    #000 24px
+  );
+
+  color: #000;
+  border-bottom: 3px solid #000;
+}
+/* ===== TAU CONSTRUCTION BANNER : END ===== */
+#tauConstructionBanner .tauConstructionLabel{
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  background: #ffc107;
+  border: 2px solid #000;
+  color: #000;
+}
+.loadSuccess {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 8px;
+  color: #1f6feb; /* confident blue */
+}
+.fileBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.fileBtn span {
+  pointer-events: none;
+}
+/* Make the Excel file picker label look like our action buttons */
+label.fileBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px dashed rgba(0,0,0,0.18);
+  background: #ffffff;
+  box-shadow: 0 7px 21px rgba(0, 0, 0, 0.18);
+}
+
+label.fileBtn span {
+  pointer-events: none;
+  font-weight: 600;
+}

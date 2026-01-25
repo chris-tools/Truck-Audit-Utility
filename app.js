@@ -272,7 +272,23 @@ function looksLikeSerial(s){
     window.prompt('Copy this:', txt);
   }
 }
+  // Export button
+  function updateExportButtonState() {
+  const btn = document.getElementById('exportCsv');
+  if (!btn) return;
 
+  // Enable export if there is anything meaningful to export.
+  // In this app:
+  // - scanned = Set of found serials
+  // - extras  = Set of extra serials
+  // - in audit mode, expected.size > 0 means there is a loaded inventory list (missing can be derived)
+  const hasData =
+    (scanned && scanned.size > 0) ||
+    (extras && extras.size > 0) ||
+    (mode === 'audit' && expected && expected.size > 0);
+
+  btn.disabled = !hasData;
+}
 
   function onSerialScanned(raw){
     const s = normalizeSerial(raw);
@@ -301,6 +317,9 @@ function looksLikeSerial(s){
     }
 
     updateUI();
+
+    updateExportButtonState();
+
   }
 
   function fillSelect(selectEl, headers){
@@ -346,12 +365,17 @@ function looksLikeSerial(s){
 
     const si = hIndex.get(serialHeader);
     const pi = partHeader ? hIndex.get(partHeader) : undefined;
+    const qi = hIndex.get('Quality');
+    const li = hIndex.get('Last Date');
+
 
     for(const r of dataRows){
       const s = normalizeSerial(r[si]);
       if(!s) continue;
       const p = (pi !== undefined) ? String(r[pi] ?? '').trim() : '';
-      expected.set(s, {part: p});
+      const q = (qi !== undefined) ? String(r[qi] ?? '').trim() : '';
+      const ld = (li !== undefined) ? String(r[li] ?? '').trim() : '';
+      expected.set(s, { part: p, quality: q, lastDate: ld });
     }
 
     matchedCount = 0;
@@ -383,36 +407,39 @@ function looksLikeSerial(s){
   });
 
   excelFile.addEventListener('change', async ()=>{
-    const f = excelFile.files && excelFile.files[0];
-    if(!f) return;
-    fileMeta.textContent = f.name;
+  const f = excelFile.files && excelFile.files[0];
+  if(!f) return;
 
-    try{
-      const {sheetName, headers, dataRows} = await parseExcel(f);
-      colPicker.hidden = false;
-      fillSelect(serialCol, headers);
-      fillSelect(partCol, ['(None)'].concat(headers));
+  fileMeta.textContent = f.name;
 
-      const sGuess = guessColumn(headers, ['Serial No','Serial','Serial Number','SN']);
-      const pGuess = guessColumn(headers, ['Part','Item','Description']);
-      serialCol.value = sGuess;
-      partCol.value = headers.includes(pGuess) ? pGuess : '(None)';
+  try{
+    const {sheetName, headers, dataRows} = await parseExcel(f);
 
-      const reload = ()=>{
-        const cp = partCol.value === '(None)' ? '' : partCol.value;
-        loadExpectedFromRows(headers, dataRows, serialCol.value, cp);
-        expectedSummary.textContent = `Loaded sheet “${sheetName}”. Expected serials: ${expected.size}.`;
-        updateUI();
-      };
+    // Locked column names (no user selection)
+    const serialHeader = headers.includes('Serial No')
+      ? 'Serial No'
+      : guessColumn(headers, ['Serial No','Serial','Serial Number','SN']);
 
-      serialCol.onchange = reload;
-      partCol.onchange = reload;
+    const partHeader = headers.includes('Part')
+      ? 'Part'
+      : guessColumn(headers, ['Part','Item','Description']);
 
-      reload();
-    }catch(e){
-      expectedSummary.textContent = 'Could not read Excel: ' + e.message;
+    if(!serialHeader){
+      throw new Error('Could not find a Serial column in the Excel sheet.');
     }
-  });
+
+    const partHeaderFinal = headers.includes(partHeader) ? partHeader : '';
+
+    loadExpectedFromRows(headers, dataRows, serialHeader, partHeaderFinal);
+
+    expectedSummary.textContent =
+      `Loaded sheet “${sheetName}”. Expected serials: ${expected.size}.`;
+
+    updateUI();
+  } catch(e){
+    expectedSummary.textContent = 'Could not read Excel: ' + e.message;
+  }
+});
 
   async function startCamera(){
     const devices = await ZXingBrowser.BrowserMultiFormatReader.listVideoInputDevices();
@@ -655,6 +682,98 @@ startScan.addEventListener('click', async ()=>{
     copyText(next);
     updateUI();
   });
+  const exportBtn = document.getElementById('exportCsv');
+
+if (exportBtn) {
+  exportBtn.addEventListener('click', () => {
+    if (exportBtn.disabled) return;
+
+    const techName = window.prompt('Tech name (required):', '');
+    if (!techName || !techName.trim()) return;
+
+    const d = new Date();  // MM/DD/YYYY
+const auditDate =
+  String(d.getMonth() + 1).padStart(2, '0') + '/' +
+  String(d.getDate()).padStart(2, '0') + '/' +
+  d.getFullYear();
+
+  // Build rows: Tech Name, Audit Date, Status, Serial, Part
+const rows = [];
+rows.push(['Tech Name','Audit Date','Serial','Part','Quality','Last Date','Status']);
+
+const tech = techName.trim();
+
+// Part lookup (only available when Excel is loaded in audit mode)
+const partFor = (serial) => {
+  if (mode === 'audit' && expected && expected.size > 0 && expected.has(serial)) {
+    return expected.get(serial)?.part || '';
+  }
+  return '';
+};
+const qualityFor = (serial) => {
+  if (mode === 'audit' && expected && expected.size > 0 && expected.has(serial)) {
+    return expected.get(serial)?.quality || '';
+  }
+  return '';
+};
+
+const lastDateFor = (serial) => {
+  if (mode === 'audit' && expected && expected.size > 0 && expected.has(serial)) {
+    return expected.get(serial)?.lastDate || '';
+  }
+  return '';
+};
+
+// Found
+const foundSerials = (mode === 'audit' && expected && expected.size > 0)
+  ? Array.from(scanned).filter(s => expected.has(s)).sort()
+  : Array.from(scanned).sort();
+
+for (const s of foundSerials) {
+  rows.push([tech, auditDate, s, partFor(s), qualityFor(s), lastDateFor(s), 'Found']);
+}
+
+// Missing (only meaningful in audit mode)
+if (mode === 'audit') {
+  regenerateMissingQueue(); // ensure it's up to date
+  for (const s of (missingQueue || [])) {
+    rows.push([tech, auditDate, s, partFor(s), qualityFor(s), lastDateFor(s), 'Missing']);
+  }
+}
+
+// Extra (only meaningful in audit mode; in quick mode extras is typically empty)
+for (const s of Array.from(extras || []).sort()) {
+  rows.push([tech, auditDate, s, '', '', '', 'Extra']);
+}
+
+// CSV encode
+const esc = (v) => {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+const csv = rows.map(r => r.map(esc).join(',')).join('\n');
+
+// Download
+const safeDate = new Date().toISOString().slice(0,10); // YYYY-MM-DD for filename
+const safeTech = tech.replace(/[^A-Za-z0-9_-]+/g, '_');
+const filename = `TAU_Audit_${safeDate}_${safeTech}.csv`;
+
+const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+const url = URL.createObjectURL(blob);
+
+const a = document.createElement('a');
+a.href = url;
+a.download = filename;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+
+setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  });
+}
+
 
   // PWA install hint
   let deferredPrompt = null;
@@ -676,11 +795,43 @@ document.addEventListener('visibilitychange', ()=>{
   if(document.hidden) stopCamera();
 });
 
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', ()=>{
-      navigator.serviceWorker.register('sw.js').catch(()=>{});
+// ===== Construction site: prevent service worker caching (SAFE) =====
+if ('serviceWorker' in navigator) {
+  const isConstruction =
+    location.hostname === 'chris-tools.github.io' &&
+    location.pathname.startsWith('/Truck-Audit-Utility-Construction/');
+
+  if (isConstruction) {
+    // Only remove SW registrations that belong to the Construction site
+    window.addEventListener('load', async () => {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          const scope = reg.scope || '';
+          const scriptURL =
+            (reg.active && reg.active.scriptURL) ||
+            (reg.waiting && reg.waiting.scriptURL) ||
+            (reg.installing && reg.installing.scriptURL) ||
+            '';
+
+          const belongsToConstruction =
+            scope.includes('/Truck-Audit-Utility-Construction/') ||
+            scriptURL.includes('/Truck-Audit-Utility-Construction/');
+
+          if (belongsToConstruction) {
+            await reg.unregister();
+          }
+        }
+      } catch (e) {}
+    });
+
+  } else {
+    // Production: keep SW enabled
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
     });
   }
+}
 
   setBanner('ok', 'Choose a mode to begin');
   updateUI();
@@ -694,5 +845,5 @@ if(dismissWarningBtn && reloadWarning){
     reloadWarning.style.display = 'none';
   });
 }
-
+updateExportButtonState();
 })();

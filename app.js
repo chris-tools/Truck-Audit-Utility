@@ -34,6 +34,10 @@
   const missingList = $('missingList');
   const extraList = $('extraList');
   const scannedList = $('scannedList');
+  const foundCount = $('foundCount');
+  const missingCount = $('missingCount');
+  const extraCount = $('extraCount');
+
 
   let mode = null; // 'audit' | 'quick'
   let expected = new Map(); // serial -> {part}
@@ -141,6 +145,51 @@ function looksLikeSerial(s){
 
   return false;
 }
+  function getResultCenter(result){
+  try{
+    const pts =
+      (typeof result.getResultPoints === 'function' && result.getResultPoints()) ||
+      result.resultPoints ||
+      [];
+
+    if(!pts || pts.length === 0) return null;
+
+    let sx = 0, sy = 0, n = 0;
+    for(const p of pts){
+      const x = (typeof p.getX === 'function') ? p.getX() : p.x;
+      const y = (typeof p.getY === 'function') ? p.getY() : p.y;
+      if(typeof x === 'number' && typeof y === 'number'){
+        sx += x;
+        sy += y;
+        n += 1;
+      }
+    }
+
+    if(n === 0) return null;
+    return { x: sx / n, y: sy / n };
+  }catch(_){
+    return null;
+  }
+}
+
+function isCenteredDecode(result, videoEl, tolerance = 0.22){
+  // tolerance = fraction of frame from center (0.22 ≈ 22%)
+  const c = getResultCenter(result);
+  if(!c) return true; // no points → don’t block scan
+
+  const w = videoEl?.videoWidth || 0;
+  const h = videoEl?.videoHeight || 0;
+  if(!w || !h) return true;
+
+  const cx = w / 2;
+  const cy = h / 2;
+
+  const dx = Math.abs(c.x - cx) / w;
+  const dy = Math.abs(c.y - cy) / h;
+
+  return (dx <= tolerance) && (dy <= tolerance);
+}
+
 
   function resetSession(){
     expected.clear();
@@ -155,16 +204,20 @@ function looksLikeSerial(s){
   }
 
   function updateCounts(){
-    statExpected.textContent = mode === 'audit' ? String(expected.size) : '—';
-    statMatched.textContent = mode === 'audit' ? String(matchedCount) : '—';
-    statExtra.textContent = String(extras.size);
-    statDup.textContent = String(dupCount);
+  if(statExpected) statExpected.textContent = mode === 'audit' ? String(expected.size) : '—';
+  if(statMatched)  statMatched.textContent  = mode === 'audit' ? String(matchedCount) : '—';
+  if(statExtra)    statExtra.textContent    = String(extras.size);
+  if(statDup)      statDup.textContent      = String(dupCount);
+
+  if(statMissing){
     if(mode === 'audit'){
       statMissing.textContent = String(Math.max(0, expected.size - matchedCount - handledMissing.size));
     } else {
       statMissing.textContent = '—';
     }
   }
+}
+
 
   function renderList(container, items, partLookup){
     container.innerHTML = '';
@@ -207,6 +260,23 @@ function looksLikeSerial(s){
 
   function updateUI(){
     updateCounts();
+      // Update per-box counters
+  if (foundCount) {
+    foundCount.textContent = `(${scanned.size})`;
+  }
+
+  if (extraCount) {
+    extraCount.textContent = `(${extras.size})`;
+  }
+
+  if (missingCount) {
+    if (mode === 'audit') {
+      missingCount.textContent = `(${missingQueue.length})`;
+    } else {
+      missingCount.textContent = '(—)';
+    }
+  }
+
 
     copyAllScanned.disabled = scanned.size === 0;
 
@@ -473,24 +543,30 @@ const constraints = {
 await scanner.decodeFromConstraints(constraints, video, (result, err)=>{
 
   // Only act on a real decode result, and only when the user has armed scanning
-if(!result || !armed) return;
+  if(!result || !armed) return;
 
-const rawText = result.getText();
-const cleaned = normalizeSerial(stripControlChars(rawText));
+  const rawText = result.getText();
+  const cleaned = normalizeSerial(stripControlChars(rawText));
 
-// If the decode looks like junk, ignore it and KEEP scanning (do not disarm)
-if(!looksLikeSerial(cleaned)){
-  setBanner('warn', 'Unclear scan — hold steadier and try again');
-  return;
-}
+  // If the decode looks like junk, ignore it and KEEP scanning (do not disarm)
+  if(!looksLikeSerial(cleaned)){
+    setBanner('warn', 'Unclear scan — hold steadier and try again');
+    return;
+  }
 
-// One-scan-per-click: accept first VALID result, then disarm until the user taps Scan Next.
-armed = false;
-hasScannedOnce = true;
-if(armTimeoutId){ clearTimeout(armTimeoutId); armTimeoutId = null; }
+  // Center-bias: prefer barcodes near the center of the camera view
+  if(!isCenteredDecode(result, video, 0.22)){
+    setBanner('warn', 'Aim the red line at the barcode (center of camera)');
+    return; // keep scanning, do NOT disarm
+  }
 
-scanSuccessSound();
-onSerialScanned(cleaned);
+  // One-scan-per-click: accept first VALID result, then disarm until the user taps Scan Next.
+  armed = false;
+  hasScannedOnce = true;
+  if(armTimeoutId){ clearTimeout(armTimeoutId); armTimeoutId = null; }
+
+  scanSuccessSound();
+  onSerialScanned(cleaned);
 
   // Shut the camera off after a successful scan
   stopCamera().then(()=>{
@@ -500,6 +576,7 @@ onSerialScanned(cleaned);
     setBanner('ok', 'Scan saved — camera off');
   });
 });
+
 
     try{
       const stream = video.srcObject;

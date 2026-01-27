@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
   <header class="topbar">
     <div class="brand">
       
@@ -61,14 +60,15 @@
         <li>
           <strong>Copy Next Missing</strong> puts the next missing serial on your clipboard so you can paste it into the correction form.
         </li>
+
         <li>
-            When finished, tap <strong>Export CSV</strong>.
-            <ul>
-            <li>You will be prompted for your name.</li>
-            <li>A CSV file will download to your device.</li>
-            <li>Attach or upload this file as instructed (email, SharePoint, or form).</li>
-          </ul>
-        </li>
+  When finished, tap <strong>Export CSV</strong>.
+  <ul>
+    <li>You will be prompted for your name.</li>
+    <li>A CSV file will download to your device.</li>
+    <li>Attach or upload this file as instructed (email, SharePoint, or form).</li>
+  </ul>
+</li>
 
       </ol>
         </div>
@@ -145,7 +145,7 @@
     <label>Manual serial</label>
     <input id="manualSerial" type="text" placeholder="Type/paste serial" autocomplete="off" />
   </div>
-  <button id="addManual" class="secondary" type="button" style="align-self:flex-end;">Add</button>
+  <button id="addManual" class="small" disabled>Add</button>
 </div>
 <!-- EXPORT BUTTONS GO LAST -->
 <div class="row">
@@ -155,16 +155,15 @@
   <button id="exportCsv" type="button" class="small" disabled>Export CSV</button>
 </div>
       
-<details class="results">
-  <summary>Show details</summary>
-
+<div class="results">
   <div class="cols">
-  <div class="card">
+
+    <div class="card">
       <h3>Found</h3>
       <div id="scannedList" class="list"></div>
     </div>
 
-   <div class="card">
+    <div class="card">
       <h3>Missing</h3>
       <div id="missingList" class="list"></div>
     </div>
@@ -173,22 +172,11 @@
       <h3>Extra</h3>
       <div id="extraList" class="list"></div>
     </div>
+
   </div>
-</details>
+</div>
 
     </section>
-
-    <section class="card">
-  <h2>Quick Steps</h2>
-
-  <ol class="steps">
-    <li><strong>Choose a mode:</strong> Truck Audit (Excel) or Quick Scan</li>
-    <li><strong>Load inventory (Audit):</strong> Select Excel File → confirm “Loaded sheet”</li>
-    <li><strong>Scan items:</strong> Tap Scan → scan each item once</li>
-    <li><strong>Finish:</strong> Missing = expected − scanned • Extras shown for reference</li>
-    <li><strong>Report missing:</strong> Copy Next Missing → paste into correction form</li>
-  </ol>
-</section>
 
     <footer class="foot">
       <span>v0.1 MVP • built for fast field use</span>

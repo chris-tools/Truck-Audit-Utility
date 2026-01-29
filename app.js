@@ -566,14 +566,17 @@ await scanner.decodeFromConstraints(constraints, video, (result, err)=>{
   if(armTimeoutId){ clearTimeout(armTimeoutId); armTimeoutId = null; }
 
   scanSuccessSound();
-  onSerialScanned(cleaned);
+  setPendingScan(cleaned);
 
   // Shut the camera off after a successful scan
   stopCamera().then(()=>{
-    startScan.disabled = false;
-    startScan.textContent = 'Scan Next';
-    stopScan.disabled = true;
-    setBanner('ok', 'Scan saved — camera off');
+  startScan.disabled = false;
+  startScan.textContent = 'Scan Next';
+
+  // If there's a pending scan, allow Finished to commit it
+  stopScan.disabled = !pendingScanText;
+
+  setBanner('ok', 'Scan captured — tap Scan Next to commit');
   });
 });
 
@@ -649,6 +652,8 @@ cameraStream = null;
   flashBtn.classList.remove('on');
 }
 startScan.addEventListener('click', async ()=>{
+      // Commit any pending Last Scanned BEFORE starting the next scan
+    commitPendingIfAny();
     const originalLabel = startScan.textContent;
     startScan.disabled = true;
     startScan.textContent = 'Scanning…';
@@ -688,6 +693,7 @@ startScan.addEventListener('click', async ()=>{
   });
 
   stopScan.addEventListener('click', async ()=>{
+        commitPendingIfAny();
     // Turn flashlight off immediately when finishing.
     if(streamTrack && torchSupported && torchOn){
       try{ await streamTrack.applyConstraints({advanced:[{torch: false}]}); }catch(_){/* ignore */}
@@ -759,6 +765,64 @@ startScan.addEventListener('click', async ()=>{
     copyText(next);
     updateUI();
   });
+  // ===== Last Scanned (pending commit) =====
+let pendingScanText = ''; // holds scan waiting to be committed
+
+const lastScannedValueEl = document.getElementById('lastScannedValue');
+const dismissLastScannedBtn = document.getElementById('dismissLastScanned');
+
+function renderLastScannedUI(){
+  if(!lastScannedValueEl || !dismissLastScannedBtn) return;
+
+    if(pendingScanText){
+    lastScannedValueEl.textContent = pendingScanText;
+    dismissLastScannedBtn.disabled = false;
+
+    // Allow "Finished" to commit the last pending scan
+    if(stopScan) stopScan.disabled = false;
+  }else{
+    lastScannedValueEl.textContent = 'Nothing scanned yet';
+    dismissLastScannedBtn.disabled = true;
+
+    // If camera isn't actively scanning, keep Finished disabled
+    // (your existing scan start/stop logic will also control this)
+    if(stopScan && !armed) stopScan.disabled = true;
+  }
+}
+
+function setPendingScan(text){
+  pendingScanText = (text || '').trim();
+  renderLastScannedUI();
+}
+
+function clearPendingScan(){
+  pendingScanText = '';
+  renderLastScannedUI();
+}
+
+// When the user taps Scan/Scan Next, commit the previous pending scan first
+function commitPendingIfAny(){
+  if(!pendingScanText) return false;
+
+  // This is the "real" commit into Found/Missing/Extra:
+  onSerialScanned(pendingScanText);
+
+  clearPendingScan();
+  return true;
+}
+
+// X button: discard pending scan (do not commit)
+if(dismissLastScannedBtn){
+  dismissLastScannedBtn.addEventListener('click', ()=>{
+    if(!pendingScanText) return;
+    clearPendingScan();
+    setBanner('ok', 'Last scan discarded');
+  });
+}
+
+// Initialize the UI on load
+renderLastScannedUI();
+
   const exportBtn = document.getElementById('exportCsv');
 
 if (exportBtn) {

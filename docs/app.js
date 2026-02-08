@@ -1245,20 +1245,25 @@ if (exportFullBtn) {
   });
 }
 
-  // PWA install hint
+   // PWA install hint
   let deferredPrompt = null;
   const installBtn = $('installBtn');
+
   window.addEventListener('beforeinstallprompt', (e)=>{
     e.preventDefault();
     deferredPrompt = e;
-    installBtn.hidden = false;
+    if (installBtn) installBtn.hidden = false;
   });
-  installBtn.addEventListener('click', async ()=>{
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt = null;
-    installBtn.hidden = true;
-  });
+
+  if (installBtn) {
+    installBtn.addEventListener('click', async ()=>{
+      if(!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt = null;
+      installBtn.hidden = true;
+    });
+  }
+
 // Safety net: if the user navigates away / backgrounds the app, release the camera
 window.addEventListener('pagehide', ()=>{ stopCamera(); });
 document.addEventListener('visibilitychange', ()=>{

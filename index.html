@@ -275,15 +275,33 @@
   <script src="xlsx.full.min.js"></script>
   <script src="zxing-browser.min.js"></script>
   <script src="app.js?v=20260207b"></script>
+<script>
+  (async () => {
+    try {
+      // Unregister any existing service workers
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) await r.unregister();
+      }
 
-  <!-- 🚧 Construction-only: disable service worker caching -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(reg => reg.unregister());
-      });
+      // Clear all Cache Storage entries
+      if (window.caches && caches.keys) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+
+      // Force a single hard refresh one time
+      const KEY = 'tau_cache_reset_done_v1';
+      if (!sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, '1');
+        location.reload(true);
+      }
+    } catch (e) {
+      // If anything fails, do nothing (don’t break the app)
+      console.log('TAU cache reset skipped:', e);
     }
-  </script>
-  <!-- 🚧 Construction-only: disable service worker caching -->
+  })();
+</script>
+
 </body>
 </html>

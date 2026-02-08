@@ -297,7 +297,7 @@ function isCenteredDecode(result, videoEl, tolerance = 0.22){
   }
 
 
-    copyAllScanned.disabled = scanned.size === 0;
+    if (copyAllScanned) copyAllScanned.disabled = scanned.size === 0;
 
     if(mode === 'audit'){
       regenerateMissingQueue();
@@ -840,13 +840,16 @@ armDelayId = setTimeout(()=>{
     }
   });
 
+ if (copyAllScanned) {
   copyAllScanned.addEventListener('click', (e)=>{
-  e.preventDefault();
-  e.stopPropagation();
- 
-  const arr = Array.from(scanned).sort();
-  copyText(arr.join('\n'));
-});
+    e.preventDefault();
+    e.stopPropagation();
+
+    const arr = Array.from(scanned).sort();
+    copyText(arr.join('\n'));
+  });
+}
+
 
   if(copyAllMissing){
   copyAllMissing.addEventListener('click', ()=>{

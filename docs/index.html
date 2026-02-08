@@ -11,7 +11,12 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  
+   <!-- ===== TAU CONSTRUCTION BANNER : BEGIN ===== -->
+<div id="tauConstructionBanner">
+  <span class="tauConstructionLabel">🚧 TAU Construction 🚧</span>
+</div>
+<!-- ===== TAU CONSTRUCTION BANNER : END ===== -->
+
   <header class="topbar">
     <div class="brand">
       
@@ -273,8 +278,16 @@
     <!-- Libs (local, cached by service worker after first load) -->
   <script src="xlsx.full.min.js"></script>
   <script src="zxing-browser.min.js"></script>
-  <script src="app.js?v=20260207c"></script>
+  <script src="app.js?v=20260120a"></script>
 
+  <!-- 🚧 Construction-only: disable service worker caching -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(reg => reg.unregister());
+      });
+    }
+  </script>
+  <!-- 🚧 Construction-only: disable service worker caching -->
 </body>
 </html>
-<!-- deploy nudge x2 -->

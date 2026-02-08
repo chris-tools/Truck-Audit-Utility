@@ -42,14 +42,32 @@ body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Aria
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 14px;margin:12px 0}
 h2{margin:0 0 10px 0;font-size:16px}
 h3{margin:12px 0 8px 0;font-size:14px}
-.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px;}
-.manualRow input,
-.manualRow button{align-self:flex-end;}
-.manualRow{align-items:flex-end}
-.manualRow .field{flex:1;min-width:220px}
-.manualRow #manualSerial{width:100%}
-.manualRow .field label{display:block}
-.manualRow button{align-self:flex-end}
+
+/* Manual serial row: align Add button with input (not label) */
+.manualRow{
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.manualRow .field{
+  flex: 1;
+  min-width: 220px;
+}
+
+.manualRow .field label{
+  margin-bottom: 6px; /* keep spacing predictable */
+}
+
+.manualRow #manualSerial{
+  width: 100%;
+}
+
+.manualRow #addManual{
+  height: 48px;           /* matches input visual height */
+  margin-bottom: 2px;    /* tiny optical nudge */
+}
+
 
 .modeRow{display:flex;gap:14px;flex-wrap:wrap}
 button{border:1px solid transparent;border-radius:12px;padding:12px 14px;font-weight:700;cursor:pointer}
@@ -88,6 +106,17 @@ button:disabled{opacity:.45;cursor:not-allowed}
 }
 
 .scanControls{align-items:stretch}
+/* Mobile spacing: prevent Scan + Finished crowding */
+@media (max-width: 520px){
+  .scanControls{
+    gap: 12px;              /* vertical space between buttons */
+  }
+
+  #startScan{
+    margin-bottom: 6px;     /* breathing room above Finished */
+  }
+}
+
 .bigAction{flex:1;min-width:180px;font-size:18px;padding:16px 18px}
 
 /* Light button lives on white cards, so override the generic "ghost" styling used in the blue header */
@@ -443,4 +472,59 @@ main.container{
   background: rgba(11, 42, 111, 0.04);
   border-radius: 18px;
   padding: 12px;
+}
+/* Export buttons: stack cleanly on small screens */
+.exportRow{
+  margin-top: 8px;
+}
+
+@media (max-width: 520px){
+  .exportRow{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exportRow button{
+    width: 100%;
+  }
+}
+/* Copy + Export layout cleanup */
+.copyRow{
+  margin-top: 10px;
+}
+
+.exportCard{
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+/* Make the export buttons feel less huge on desktop */
+@media (min-width: 700px){
+  .exportCard .bigAction{
+    min-width: 220px;
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+}
+
+/* On phones, keep export buttons full-width and clean */
+@media (max-width: 520px){
+  .exportCard .bigAction{
+    width: 100%;
+  }
+}
+
+/* Mobile: keep Copy buttons side-by-side with real spacing */
+@media (max-width: 520px){
+  .copyRow{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .copyRow button{
+    width: 100%;
+  }
 }

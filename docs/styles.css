@@ -293,7 +293,7 @@ label.fileBtn {
   cursor: pointer;
   padding: 14px 18px;
   border-radius: 14px;
-  border: 1px dashed rgba(0,0,0,0.18);
+  border: 1px solid rgba(0,0,0,0.18);
   background: #ffffff;
   box-shadow: 0 7px 21px rgba(0, 0, 0, 0.18);
 }
@@ -527,4 +527,11 @@ main.container{
   .copyRow button{
     width: 100%;
   }
+}
+/* Invisible selectable authorship marker */
+.hidden-author-mark{
+  font-size: 5px;
+  color: #ffffff;     /* matches card background */
+  line-height: 0;
+  user-select: text;
 }

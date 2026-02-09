@@ -11,8 +11,14 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-   
 
+  <!-- ===== TAU CONSTRUCTION BANNER : BEGIN ===== -->
+  <div id="tauConstructionBanner">
+    <span class="tauConstructionLabel">🚧 TAU Construction 🚧</span>
+  </div>
+  <!-- ===== TAU CONSTRUCTION BANNER : END ===== -->
+
+   
   <header class="topbar">
     <div class="brand">
       
@@ -79,8 +85,13 @@
         
     </section>
 
-    <section id="scanSection" class="card" hidden>
-      <h2>3) Scan</h2>
+   <section id="scanSection" class="card" hidden>
+    <h2>
+  3) Scan
+  <span class="hidden-author-mark">
+    Truck Audit Utility — Original work by Chris Gagnon — 2026
+  </span>
+</h2>
 
       <div id="banner" class="banner" hidden></div>
 
@@ -274,34 +285,16 @@
     <!-- Libs (local, cached by service worker after first load) -->
   <script src="xlsx.full.min.js"></script>
   <script src="zxing-browser.min.js"></script>
-  <script src="app.js?v=20260207b"></script>
-<script>
-  (async () => {
-    try {
-      // Unregister any existing service workers
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        for (const r of regs) await r.unregister();
-      }
+  <script src="app.js?v=20260120a"></script>
 
-      // Clear all Cache Storage entries
-      if (window.caches && caches.keys) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      }
-
-      // Force a single hard refresh one time
-      const KEY = 'tau_cache_reset_done_v1';
-      if (!sessionStorage.getItem(KEY)) {
-        sessionStorage.setItem(KEY, '1');
-        location.reload(true);
-      }
-    } catch (e) {
-      // If anything fails, do nothing (don’t break the app)
-      console.log('TAU cache reset skipped:', e);
+  <!-- 🚧 Construction-only: disable service worker caching -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(reg => reg.unregister());
+      });
     }
-  })();
-</script>
-
+  </script>
+  <!-- 🚧 Construction-only: disable service worker caching -->
 </body>
 </html>

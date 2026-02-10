@@ -11,6 +11,13 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+  <!-- ===== TAU CONSTRUCTION BANNER : BEGIN ===== -->
+  <div id="tauConstructionBanner">
+    <span class="tauConstructionLabel">🚧 TAU Construction 🚧</span>
+  </div>
+  <!-- ===== TAU CONSTRUCTION BANNER : END ===== -->
+
    
   <header class="topbar">
     <div class="brand">
@@ -57,19 +64,19 @@
  <h2>1) Choose a mode</h2>
 
 <div class="modeRow">
-  <button id="modeAuditBtn" class="primary">Truck Audit (Upload Excel)</button>
-  <button id="modeQuickBtn" class="secondary">Quick Scan (No Excel)</button>
+  <button id="modeAuditBtn" class="primary">Truck Audit (Upload Inventory File)</button>
+  <button id="modeQuickBtn" class="secondary">Quick Scan (No File)</button>
 </div>
 
       <p class="hint">Works offline <em>after</em> the first load. For best results, keep the correction form open in another tab.</p>
     </section>
 
     <section id="auditSection" class="card" hidden>
-      <h2>2) Upload inventory Excel</h2>
+      <h2>2) Upload inventory file</h2>
       <div class="row">
   <label for="excelFile" class="fileBtn primary bigAction">
-    <input id="excelFile" type="file" accept=".xlsx,.xls" hidden />
-    <span>Select Excel file</span>
+    <input id="excelFile" type="file" accept=".xlsx,.xls,.csv,text/csv" hidden />
+    <span>Select Inventory File</span>
   </label>
 </div>
        

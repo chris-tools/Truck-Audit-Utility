@@ -201,7 +201,7 @@ function isCenteredDecode(result, videoEl, tolerance = 0.22){
   if(!w || !h) return true;
 
   const cx = w / 2;
-  const cy = h / 2;
+  const cy = h * 0.62;
 
   const dx = Math.abs(c.x - cx) / w;
   const dy = Math.abs(c.y - cy) / h;
@@ -297,7 +297,7 @@ function isCenteredDecode(result, videoEl, tolerance = 0.22){
   }
 
 
-    copyAllScanned.disabled = scanned.size === 0;
+    if (copyAllScanned) copyAllScanned.disabled = scanned.size === 0;
 
     if(mode === 'audit'){
       regenerateMissingQueue();
@@ -463,6 +463,83 @@ function updateExportButtonState() {
     const dataRows = rows.slice(1).filter(r=>r && r.length>0);
     return {sheetName, headers, dataRows};
   }
+  
+  // ===== CSV parsing (for inventory uploads) =====
+function detectCsvDelimiter(firstLine){
+  const comma = (firstLine.match(/,/g) || []).length;
+  const semi  = (firstLine.match(/;/g) || []).length;
+  const tab   = (firstLine.match(/\t/g) || []).length;
+
+  if(tab > comma && tab > semi) return '\t';
+  if(semi > comma) return ';';
+  return ',';
+}
+
+function parseCsvLine(line, delimiter){
+  const out = [];
+  let cur = '';
+  let inQuotes = false;
+
+  for(let i = 0; i < line.length; i++){
+    const ch = line[i];
+
+    if(ch === '"'){
+      // "" inside quotes -> literal "
+      if(inQuotes && line[i+1] === '"'){
+        cur += '"';
+        i++;
+      }else{
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if(!inQuotes && ch === delimiter){
+      out.push(cur.trim());
+      cur = '';
+      continue;
+    }
+
+    cur += ch;
+  }
+
+  out.push(cur.trim());
+  return out;
+}
+
+function findHeaderContaining(headers, needle){
+  const n = String(needle || '').toLowerCase();
+  for(const h of headers){
+    const s = String(h || '').toLowerCase();
+    if(s.includes(n)) return h;
+  }
+  return '';
+}
+
+async function parseCsv(file){
+  const textRaw = await file.text();
+
+  // Remove BOM if present
+  const text = textRaw.replace(/^\uFEFF/, '');
+
+  const lines = text
+    .split(/\r?\n/)
+    .map(l => l.trimEnd())
+    .filter(l => l.trim().length > 0);
+
+  if(lines.length < 2) throw new Error('CSV seems empty (needs a header row + at least 1 data row).');
+
+  const delimiter = detectCsvDelimiter(lines[0]);
+
+  const headers = parseCsvLine(lines[0], delimiter)
+    .map(h => String(h || '').trim())
+    .filter(Boolean);
+
+  const dataRows = lines.slice(1).map(line => parseCsvLine(line, delimiter));
+
+  return { sheetName: 'CSV', headers, dataRows };
+}
+
 
   function loadExpectedFromRows(headers, dataRows, serialHeader, partHeader){
     expected.clear();
@@ -552,14 +629,56 @@ function formatExcelDateCell(v) {
   return String(v).trim();
 }
 
-  excelFile.addEventListener('change', async ()=>{
+ excelFile.addEventListener('change', async ()=>{
   const f = excelFile.files && excelFile.files[0];
   if(!f) return;
 
   fileMeta.textContent = f.name;
 
+  // STEP 1: detect CSV vs Excel
+  const lowerName = String(f.name || '').toLowerCase();
+  if (lowerName.endsWith('.csv')) {
+  try{
+    const { sheetName, headers, dataRows } = await parseCsv(f);
+
+    // Prefer "Serial No", otherwise any header containing "serial"
+    const serialHeader = headers.includes('Serial No')
+      ? 'Serial No'
+      : (findHeaderContaining(headers, 'serial') ||
+         guessColumn(headers, ['Serial No','Serial','Serial Number','SN']));
+
+    // Part column is optional
+    const partHeader = headers.includes('Part')
+      ? 'Part'
+      : (findHeaderContaining(headers, 'part') ||
+         guessColumn(headers, ['Part','Item','Description']));
+
+    if(!serialHeader){
+      throw new Error('Could not find a Serial column in the CSV.');
+    }
+
+    const partHeaderFinal = headers.includes(partHeader) ? partHeader : '';
+
+    loadExpectedFromRows(headers, dataRows, serialHeader, partHeaderFinal);
+
+    expectedSummary.textContent =
+  `Inventory loaded. Expected serials: ${expected.size}.`;
+
+    setBanner('ok', 'CSV loaded');
+    updateUI();
+    updateExportButtonState();
+  } catch(e){
+    expectedSummary.textContent = 'Could not read CSV: ' + e.message;
+    setBanner('bad', 'CSV import failed');
+  }
+
+  return; // IMPORTANT: stop here so Excel parser does not run
+}
+
+
   try{
     const {sheetName, headers, dataRows} = await parseExcel(f);
+
 
     // Locked column names (no user selection)
     const serialHeader = headers.includes('Serial No')
@@ -578,8 +697,8 @@ function formatExcelDateCell(v) {
 
     loadExpectedFromRows(headers, dataRows, serialHeader, partHeaderFinal);
 
-    expectedSummary.textContent =
-      `Loaded sheet “${sheetName}”. Expected serials: ${expected.size}.`;
+  expectedSummary.textContent =
+  `Inventory loaded. Expected serials: ${expected.size}.`;
 
     updateUI();
     updateExportButtonState();
@@ -619,6 +738,7 @@ const constraints = {
 
 await scanner.decodeFromConstraints(constraints, video, (result, err)=>{
   if(!result || !armed) return;
+  if(!isCenteredDecode(result, video, 0.18)) return;
 
   const rawText = result.getText();
   let cleaned = normalizeSerial(stripControlChars(rawText));
@@ -840,13 +960,16 @@ armDelayId = setTimeout(()=>{
     }
   });
 
+ if (copyAllScanned) {
   copyAllScanned.addEventListener('click', (e)=>{
-  e.preventDefault();
-  e.stopPropagation();
- 
-  const arr = Array.from(scanned).sort();
-  copyText(arr.join('\n'));
-});
+    e.preventDefault();
+    e.stopPropagation();
+
+    const arr = Array.from(scanned).sort();
+    copyText(arr.join('\n'));
+  });
+}
+
 
   if(copyAllMissing){
   copyAllMissing.addEventListener('click', ()=>{
@@ -1245,20 +1368,25 @@ if (exportFullBtn) {
   });
 }
 
-  // PWA install hint
+   // PWA install hint
   let deferredPrompt = null;
   const installBtn = $('installBtn');
+
   window.addEventListener('beforeinstallprompt', (e)=>{
     e.preventDefault();
     deferredPrompt = e;
-    installBtn.hidden = false;
+    if (installBtn) installBtn.hidden = false;
   });
-  installBtn.addEventListener('click', async ()=>{
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt = null;
-    installBtn.hidden = true;
-  });
+
+  if (installBtn) {
+    installBtn.addEventListener('click', async ()=>{
+      if(!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt = null;
+      installBtn.hidden = true;
+    });
+  }
+
 // Safety net: if the user navigates away / backgrounds the app, release the camera
 window.addEventListener('pagehide', ()=>{ stopCamera(); });
 document.addEventListener('visibilitychange', ()=>{

@@ -707,63 +707,119 @@ function formatExcelDateCell(v) {
   }
 });
 
-  async function pickBestRearCameraDeviceId(devices){
-  // Tries rear-ish cameras and picks the one with the best zoom capability (or best resolution fallback).
-  // This helps Samsung/Chrome avoid choosing the ultra-wide lens.
-  const cams = (devices || []).filter(d => d && d.deviceId);
-
-  // Prefer anything that looks like a rear camera by label; fallback to all cams.
-  const rearCandidates = cams.filter(d => /back|rear|environment/i.test(d.label || ''));
-  const pool = rearCandidates.length ? rearCandidates : cams;
-
-  let best = null;
-
-  for(const cam of pool){
-    let stream = null;
+    async function ensureVideoPermissionOnce(){
+    // Chrome often hides device labels until the user grants camera permission at least once.
     try{
-      stream = await navigator.mediaDevices.getUserMedia({
+      const tmp = await navigator.mediaDevices.getUserMedia({
         audio: false,
-        video: {
-          deviceId: { exact: cam.deviceId },
-          width:  { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
+        video: { facingMode: { ideal: 'environment' } }
       });
-
-      const track = stream.getVideoTracks?.()[0];
-      if(!track) continue;
-
-      const caps = track.getCapabilities ? track.getCapabilities() : {};
-      const settings = track.getSettings ? track.getSettings() : {};
-
-      const zoomMax =
-        (caps.zoom && typeof caps.zoom.max === 'number') ? caps.zoom.max : 1;
-
-      const area = (settings.width || 0) * (settings.height || 0);
-
-      // Score: zoom dominates; resolution breaks ties.
-      const score = (zoomMax * 1_000_000) + area;
-
-      if(!best || score > best.score){
-        best = { deviceId: cam.deviceId, score };
-      }
+      tmp.getTracks().forEach(t => t.stop());
     }catch(_){
-      // ignore and try next
-    }finally{
-      if(stream){
-        try{ stream.getTracks().forEach(t => t.stop()); }catch(_){}
-      }
+      // If user denies, we can’t do much; scanning will fail anyway.
     }
   }
 
-  return best ? best.deviceId : (pool[pool.length - 1]?.deviceId || null);
-}
-  
-  async function startCamera(){
-    const devices = await ZXingBrowser.BrowserMultiFormatReader.listVideoInputDevices();
+  function labelScore(label){
+    const s = String(label || '').toLowerCase();
 
-   // Prefer the best rear camera (helps Samsung/Chrome avoid the ultra-wide lens)
-let deviceId = preferredDeviceId;
+    // Strongly prefer the “main / wide” rear lens.
+    let score = 0;
+
+    if (/(back|rear|environment)/.test(s)) score += 50;
+
+    // Prefer "wide" / "main"
+    if (/\bwide\b/.test(s)) score += 40;
+    if (/\bmain\b/.test(s)) score += 35;
+
+    // Avoid lenses that are usually bad for close barcode scanning
+    if (/ultra/.test(s)) score -= 80;   // ultra-wide = soft up close
+    if (/tele/.test(s)) score -= 60;    // telephoto = needs distance
+    if (/zoom/.test(s)) score -= 20;
+
+    return score;
+  }
+
+    async function pickBestRearCameraDeviceId(devices){
+    // Goal: pick the MAIN/WIDE rear camera (avoid ultra-wide + tele).
+    const cams = (devices || []).filter(d => d && d.deviceId);
+
+    // Prefer rear-ish labels if available, otherwise try all.
+    const rearCandidates = cams.filter(d => /back|rear|environment/i.test(d.label || ''));
+    const pool = rearCandidates.length ? rearCandidates : cams;
+
+    let best = null;
+
+    for(const cam of pool){
+      let stream = null;
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            deviceId: { exact: cam.deviceId },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+
+        const track = stream.getVideoTracks?.()[0];
+        if(!track) continue;
+
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+        const settings = track.getSettings ? track.getSettings() : {};
+
+        const area = (settings.width || 0) * (settings.height || 0);
+
+        const zoomMax =
+          (caps.zoom && typeof caps.zoom.max === 'number') ? caps.zoom.max : 1;
+
+        const focusModes = Array.isArray(caps.focusMode) ? caps.focusMode : [];
+        const hasContinuousAF = focusModes.includes('continuous');
+        const hasFocusDistance = !!caps.focusDistance;
+
+        // Scoring:
+        // - Strongly prefer cameras that support continuous autofocus (usually main lens)
+        // - Prefer moderate zoom range (main lens often reports >1 and <~6)
+        // - Penalize zoomMax ~= 1 (often ultra-wide) and zoomMax very high (often tele)
+        let score = 0;
+
+        score += area; // resolution helps, but not the main driver
+
+        if(hasContinuousAF) score += 2_000_000;
+        if(hasFocusDistance) score += 500_000;
+
+        // Prefer zoomMax in a “main lens” band
+        if(zoomMax >= 2 && zoomMax <= 6) score += 1_000_000;
+
+        // Penalize likely ultra-wide
+        if(zoomMax <= 1.1) score -= 2_000_000;
+
+        // Penalize likely telephoto
+        if(zoomMax >= 7) score -= 1_500_000;
+
+        if(!best || score > best.score){
+          best = { deviceId: cam.deviceId, score };
+        }
+      }catch(_){
+        // ignore and try next
+      }finally{
+        if(stream){
+          try{ stream.getTracks().forEach(t => t.stop()); }catch(_){}
+        }
+      }
+    }
+
+    return best ? best.deviceId : (pool[pool.length - 1]?.deviceId || null);
+  }
+  
+ async function startCamera(){
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  await ensureVideoPermissionOnce();
+  const devices = await ZXingBrowser.BrowserMultiFormatReader.listVideoInputDevices();
+
+// On Android/Chrome, don’t trust a previously-cached deviceId (can “stick” to ultra-wide)
+let deviceId = (isAndroid ? null : preferredDeviceId);
 
 if(!deviceId){
   deviceId = await pickBestRearCameraDeviceId(devices);
@@ -773,9 +829,6 @@ preferredDeviceId = deviceId || null;
 
    scanner = new ZXingBrowser.BrowserMultiFormatReader();
   
-    // Ask for a sharper video feed (helps tiny 2D codes a LOT)
-const isAndroid = /Android/i.test(navigator.userAgent);
-
 const constraints = {
   audio: false,
   video: {
@@ -838,9 +891,7 @@ cleaned = cleaned.replace(/#/g, '');
       if(stream){
         streamTrack = stream.getVideoTracks()[0];
         const caps = streamTrack.getCapabilities ? streamTrack.getCapabilities() : {};
-        // --- Android focus nudge (Samsung fix) ---
-const isAndroid = /Android/i.test(navigator.userAgent);
-
+      
 if (isAndroid && streamTrack && streamTrack.applyConstraints) {
   try {
     const adv = [];
@@ -874,7 +925,6 @@ if(zoomSupported){
   const minZ = Number(caps.zoom.min ?? 1);
   const maxZ = Number(caps.zoom.max ?? 1);
 
-  const isAndroid = /Android/i.test(navigator.userAgent);
   const desired = isAndroid ? 1.25 : 2;
 
   const target = Math.min(maxZ, Math.max(minZ, desired));

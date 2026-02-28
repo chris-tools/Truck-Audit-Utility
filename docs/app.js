@@ -875,13 +875,14 @@ cleaned = cleaned.replace(/#/g, '');
   }
 
   scanSuccessSound();
-  setPendingScan(cleaned);
 
-    // Keep the camera running for speed (don’t stop/restart between items)
-  startScan.disabled = false;
-  startScan.textContent = 'Tap to Confirm';
-  stopScan.disabled = !pendingScanText;
-  setBanner('ok', 'Scan captured — tap Scan Next to commit');
+// Keep the camera running for speed (don’t stop/restart between items)
+startScan.disabled = false;
+startScan.textContent = 'Tap to Confirm';
+
+setPendingScan(cleaned);          // <-- moved here
+
+stopScan.disabled = false;        // (since we now definitely have a pending scan)
   });
 
     try{
@@ -1127,6 +1128,16 @@ const lastScannedValueEl = document.getElementById('lastScannedValue');
 const dismissLastScannedBtn = document.getElementById('dismissLastScanned');
 const lastScannedCheckEl = document.getElementById('lastScannedCheck');
 
+  function setScanConfirmVisualState(isConfirmPending){
+  if(!startScan) return;
+
+  // Only show the yellow "confirm" state when the button is actually actionable
+  if(isConfirmPending && !startScan.disabled){
+    startScan.classList.add('confirmPending');
+  }else{
+    startScan.classList.remove('confirmPending');
+  }
+}
 
 function renderLastScannedUI(){
   if(!lastScannedValueEl || !dismissLastScannedBtn) return;
@@ -1145,6 +1156,7 @@ function renderLastScannedUI(){
     // (your existing scan start/stop logic will also control this)
     if(stopScan && !armed) stopScan.disabled = true;
   }
+  setScanConfirmVisualState(!!pendingScanText);
 }
 
 function setPendingScan(text){

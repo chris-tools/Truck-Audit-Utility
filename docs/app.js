@@ -2,10 +2,10 @@
   const $ = (id)=>document.getElementById(id);
 
   const modeAuditBtn = $('modeAuditBtn');
-  const modeQuickBtn = $('modeQuickBtn');
   const auditSection = $('auditSection');
   const scanSection = $('scanSection');
   const excelFile = $('excelFile');
+  const fileBtn = $('fileBtn');
   const fileMeta = $('fileMeta');
   const colPicker = $('colPicker');
   const serialCol = $('serialCol');
@@ -30,6 +30,7 @@
   const addManual = $('addManual');
 
   const copyNextMissing = $('copyNextMissing');
+  const TAU_EMAIL = 'chris.gagnon@fidium.com';
   const copyAllMissing = $('copyAllMissing');
   const copyAllScanned = $('copyAllScanned');
 
@@ -41,7 +42,7 @@
   const extraCount = $('extraCount');
 
 
-  let mode = null; // 'audit' | 'quick'
+  let mode = 'audit';
   let expected = new Map(); // serial -> {part}
   let scanned = new Set();  // unique
   let extras = new Set();
@@ -299,14 +300,14 @@ function isCenteredDecode(result, videoEl, tolerance = 0.22){
 
     if (copyAllScanned) copyAllScanned.disabled = scanned.size === 0;
 
-    if(mode === 'audit'){
-      regenerateMissingQueue();
-      copyNextMissing.disabled = missingQueue.length === 0;
-      if(copyAllMissing) copyAllMissing.disabled = missingQueue.length === 0;
-   } else {
-  copyNextMissing.disabled = true;
-  if(copyAllMissing) copyAllMissing.disabled = true;
-}
+const hasTech = techNameField && techNameField.value.trim().length > 0;
+const hasContractor = contractorField && contractorField.value.trim().length > 0;
+
+// Enable copy button when required fields are filled
+copyNextMissing.disabled = !(hasTech && hasContractor);
+
+// Keep this disabled (we're phasing it out anyway)
+if(copyAllMissing) copyAllMissing.disabled = true;
 
     const scannedArr = Array.from(scanned).sort();
     const extraArr = Array.from(extras).sort();
@@ -362,37 +363,35 @@ function isCenteredDecode(result, videoEl, tolerance = 0.22){
   }
 }
 
-  function updateModeButtonsState() {
+function updateModeButtonsState() {
   const hasTech = techNameField && techNameField.value.trim().length > 0;
   const hasContractor = contractorField && contractorField.value.trim().length > 0;
 
-  const canChooseMode = hasTech && hasContractor;
+  const canProceed = hasTech && hasContractor;
 
-  if (modeAuditBtn) modeAuditBtn.disabled = !canChooseMode;
-  if (modeQuickBtn) modeQuickBtn.disabled = !canChooseMode;
+  if (modeAuditBtn) modeAuditBtn.disabled = !canProceed;
+
+  // NEW: control file button
+  if (fileBtn) {
+    fileBtn.classList.toggle('disabled', !canProceed);
+  }
+
+  if (excelFile) {
+    excelFile.disabled = !canProceed;
+  }
 }
 
   // Export button
 function updateExportButtonState() {
   const exportAuditBtn = document.getElementById('exportCsv');
-  const exportFullBtn  = document.getElementById('exportFullCsv');
-
   const hasExpected = expected && expected.size > 0;
   const hasScans = scanned && scanned.size > 0;
 
   const hasTech = techNameField && techNameField.value.trim().length > 0;
   const hasContractor = contractorField && contractorField.value.trim().length > 0;
-
-  // Export Audit Results (your existing audit export)
-  // Keep this strict: audit mode + excel + tech + contractor
-  const canExportAudit = (mode === 'audit' && hasExpected && hasTech && hasContractor);
-
-  // Export Full Report (Reference)
-  // Works if tech+contractor AND (excel imported OR at least one scan)
-  const canExportFull = (hasTech && hasContractor && (hasExpected || hasScans));
+  const canExportAudit = (hasExpected && hasTech && hasContractor);
 
   if (exportAuditBtn) exportAuditBtn.disabled = !canExportAudit;
-  if (exportFullBtn)  exportFullBtn.disabled  = !canExportFull;
 }
 
 
@@ -570,25 +569,7 @@ async function parseCsv(file){
     handledMissing = new Set(); // reset handled when inventory reloads
   }
 
-  modeAuditBtn.addEventListener('click', ()=>{
-    mode = 'audit';
-    resetSession();
-    auditSection.hidden = false;
-    scanSection.hidden = false;
-    expectedSummary.textContent = 'Upload the Excel you were emailed. Then scan everything on the truck.';
-    setBanner('ok', 'Audit mode ready');
-    updateUI();
-  });
-
-  modeQuickBtn.addEventListener('click', ()=>{
-    mode = 'quick';
-    resetSession();
-    auditSection.hidden = true;
-    scanSection.hidden = false;
-    setBanner('ok', 'Quick Scan mode ready');
-    updateUI();
-  });
-// ===== Excel date normalization helper =====
+ // ===== Excel date normalization helper =====
 function formatExcelDateCell(v) {
   if (v === null || v === undefined) return '';
 
@@ -665,6 +646,8 @@ function formatExcelDateCell(v) {
   `Inventory loaded. Expected serials: ${expected.size}.`;
 
     setBanner('ok', 'CSV loaded');
+    regenerateMissingQueue();
+    scanSection.hidden = false;
     updateUI();
     updateExportButtonState();
   } catch(e){
@@ -700,70 +683,127 @@ function formatExcelDateCell(v) {
   expectedSummary.textContent =
   `Inventory loaded. Expected serials: ${expected.size}.`;
 
-    updateUI();
-    updateExportButtonState();
+  regenerateMissingQueue();
+  updateUI();
+  updateExportButtonState();
   } catch(e){
     expectedSummary.textContent = 'Could not read Excel: ' + e.message;
   }
 });
 
-  async function pickBestRearCameraDeviceId(devices){
-  // Tries rear-ish cameras and picks the one with the best zoom capability (or best resolution fallback).
-  // This helps Samsung/Chrome avoid choosing the ultra-wide lens.
-  const cams = (devices || []).filter(d => d && d.deviceId);
-
-  // Prefer anything that looks like a rear camera by label; fallback to all cams.
-  const rearCandidates = cams.filter(d => /back|rear|environment/i.test(d.label || ''));
-  const pool = rearCandidates.length ? rearCandidates : cams;
-
-  let best = null;
-
-  for(const cam of pool){
-    let stream = null;
+    async function ensureVideoPermissionOnce(){
+    // Chrome often hides device labels until the user grants camera permission at least once.
     try{
-      stream = await navigator.mediaDevices.getUserMedia({
+      const tmp = await navigator.mediaDevices.getUserMedia({
         audio: false,
-        video: {
-          deviceId: { exact: cam.deviceId },
-          width:  { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
+        video: { facingMode: { ideal: 'environment' } }
       });
-
-      const track = stream.getVideoTracks?.()[0];
-      if(!track) continue;
-
-      const caps = track.getCapabilities ? track.getCapabilities() : {};
-      const settings = track.getSettings ? track.getSettings() : {};
-
-      const zoomMax =
-        (caps.zoom && typeof caps.zoom.max === 'number') ? caps.zoom.max : 1;
-
-      const area = (settings.width || 0) * (settings.height || 0);
-
-      // Score: zoom dominates; resolution breaks ties.
-      const score = (zoomMax * 1_000_000) + area;
-
-      if(!best || score > best.score){
-        best = { deviceId: cam.deviceId, score };
-      }
+      tmp.getTracks().forEach(t => t.stop());
     }catch(_){
-      // ignore and try next
-    }finally{
-      if(stream){
-        try{ stream.getTracks().forEach(t => t.stop()); }catch(_){}
-      }
+      // If user denies, we can’t do much; scanning will fail anyway.
     }
   }
 
-  return best ? best.deviceId : (pool[pool.length - 1]?.deviceId || null);
-}
-  
-  async function startCamera(){
-    const devices = await ZXingBrowser.BrowserMultiFormatReader.listVideoInputDevices();
+  function labelScore(label){
+    const s = String(label || '').toLowerCase();
 
-   // Prefer the best rear camera (helps Samsung/Chrome avoid the ultra-wide lens)
-let deviceId = preferredDeviceId;
+    // Strongly prefer the “main / wide” rear lens.
+    let score = 0;
+
+    if (/(back|rear|environment)/.test(s)) score += 50;
+
+    // Prefer "wide" / "main"
+    if (/\bwide\b/.test(s)) score += 40;
+    if (/\bmain\b/.test(s)) score += 35;
+
+    // Avoid lenses that are usually bad for close barcode scanning
+    if (/ultra/.test(s)) score -= 80;   // ultra-wide = soft up close
+    if (/tele/.test(s)) score -= 60;    // telephoto = needs distance
+    if (/zoom/.test(s)) score -= 20;
+
+    return score;
+  }
+
+    async function pickBestRearCameraDeviceId(devices){
+    // Goal: pick the MAIN/WIDE rear camera (avoid ultra-wide + tele).
+    const cams = (devices || []).filter(d => d && d.deviceId);
+
+    // Prefer rear-ish labels if available, otherwise try all.
+    const rearCandidates = cams.filter(d => /back|rear|environment/i.test(d.label || ''));
+    const pool = rearCandidates.length ? rearCandidates : cams;
+
+    let best = null;
+
+    for(const cam of pool){
+      let stream = null;
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            deviceId: { exact: cam.deviceId },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+
+        const track = stream.getVideoTracks?.()[0];
+        if(!track) continue;
+
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+        const settings = track.getSettings ? track.getSettings() : {};
+
+        const area = (settings.width || 0) * (settings.height || 0);
+
+        const zoomMax =
+          (caps.zoom && typeof caps.zoom.max === 'number') ? caps.zoom.max : 1;
+
+        const focusModes = Array.isArray(caps.focusMode) ? caps.focusMode : [];
+        const hasContinuousAF = focusModes.includes('continuous');
+        const hasFocusDistance = !!caps.focusDistance;
+
+        // Scoring:
+        // - Strongly prefer cameras that support continuous autofocus (usually main lens)
+        // - Prefer moderate zoom range (main lens often reports >1 and <~6)
+        // - Penalize zoomMax ~= 1 (often ultra-wide) and zoomMax very high (often tele)
+        let score = 0;
+
+        score += area; // resolution helps, but not the main driver
+
+        if(hasContinuousAF) score += 2_000_000;
+        if(hasFocusDistance) score += 500_000;
+
+        // Prefer zoomMax in a “main lens” band
+        if(zoomMax >= 2 && zoomMax <= 6) score += 1_000_000;
+
+        // Penalize likely ultra-wide
+        if(zoomMax <= 1.1) score -= 2_000_000;
+
+        // Penalize likely telephoto
+        if(zoomMax >= 7) score -= 1_500_000;
+
+        if(!best || score > best.score){
+          best = { deviceId: cam.deviceId, score };
+        }
+      }catch(_){
+        // ignore and try next
+      }finally{
+        if(stream){
+          try{ stream.getTracks().forEach(t => t.stop()); }catch(_){}
+        }
+      }
+    }
+
+    return best ? best.deviceId : (pool[pool.length - 1]?.deviceId || null);
+  }
+  
+ async function startCamera(){
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  await ensureVideoPermissionOnce();
+  const devices = await ZXingBrowser.BrowserMultiFormatReader.listVideoInputDevices();
+
+// On Android/Chrome, don’t trust a previously-cached deviceId (can “stick” to ultra-wide)
+let deviceId = (isAndroid ? null : preferredDeviceId);
 
 if(!deviceId){
   deviceId = await pickBestRearCameraDeviceId(devices);
@@ -773,9 +813,6 @@ preferredDeviceId = deviceId || null;
 
    scanner = new ZXingBrowser.BrowserMultiFormatReader();
   
-    // Ask for a sharper video feed (helps tiny 2D codes a LOT)
-const isAndroid = /Android/i.test(navigator.userAgent);
-
 const constraints = {
   audio: false,
   video: {
@@ -822,15 +859,15 @@ cleaned = cleaned.replace(/#/g, '');
   }
 
   scanSuccessSound();
-  setPendingScan(cleaned);
 
-  stopCamera().then(()=>{
-    startScan.disabled = false;
-    startScan.textContent = 'Scan Next';
-    stopScan.disabled = !pendingScanText;
-    setBanner('ok', 'Scan captured — tap Scan Next to commit');
+// Keep the camera running for speed (don’t stop/restart between items)
+startScan.disabled = false;
+startScan.textContent = 'Tap to Confirm';
+
+setPendingScan(cleaned);          // <-- moved here
+
+stopScan.disabled = false;        // (since we now definitely have a pending scan)
   });
-});
 
     try{
       const stream = video.srcObject;
@@ -838,9 +875,7 @@ cleaned = cleaned.replace(/#/g, '');
       if(stream){
         streamTrack = stream.getVideoTracks()[0];
         const caps = streamTrack.getCapabilities ? streamTrack.getCapabilities() : {};
-        // --- Android focus nudge (Samsung fix) ---
-const isAndroid = /Android/i.test(navigator.userAgent);
-
+      
 if (isAndroid && streamTrack && streamTrack.applyConstraints) {
   try {
     const adv = [];
@@ -874,7 +909,6 @@ if(zoomSupported){
   const minZ = Number(caps.zoom.min ?? 1);
   const maxZ = Number(caps.zoom.max ?? 1);
 
-  const isAndroid = /Android/i.test(navigator.userAgent);
   const desired = isAndroid ? 1.25 : 2;
 
   const target = Math.min(maxZ, Math.max(minZ, desired));
@@ -968,17 +1002,19 @@ armDelayId = setTimeout(()=>{
   if(armDelayId){ clearTimeout(armDelayId); armDelayId = null; }
 
   // Timeout starts AFTER we arm
+  // Timeout starts AFTER we arm
   armTimeoutId = setTimeout(()=>{
     if(!armed) return;
     armed = false;
-    stopCamera().then(()=>{
-      startScan.disabled = false;
-      startScan.textContent = hasScannedOnce ? 'Scan Next' : 'Scan';
-      stopScan.disabled = true;
-      setBanner('warn', 'Timed out — tap Scan Next to try again');
-    });
-  }, 30000);
 
+    // Keep the camera running (faster retries)
+    startScan.disabled = false;
+    startScan.textContent = hasScannedOnce ? 'Tap to Confirm' : 'Scan';
+    stopScan.disabled = false; // keep Finished available
+    setBanner('warn', 'Timed out — tap Scan Next to try again');
+    
+  }, 30000);
+  
 }, 450);
 
     }catch(e){
@@ -1061,14 +1097,9 @@ armDelayId = setTimeout(()=>{
 }
 
   copyNextMissing.addEventListener('click', ()=>{
-    if(mode !== 'audit') return;
-    regenerateMissingQueue();
-    if(missingQueue.length === 0) return;
-    const next = missingQueue[0];
-    handledMissing.add(next);
-    copyText(next);
-    updateUI();
-  });
+  copyText(TAU_EMAIL);
+  setBanner('ok', 'Email copied');
+});
   // ===== Last Scanned (pending commit) =====
 let pendingScanText = ''; // holds scan waiting to be committed
 
@@ -1076,6 +1107,16 @@ const lastScannedValueEl = document.getElementById('lastScannedValue');
 const dismissLastScannedBtn = document.getElementById('dismissLastScanned');
 const lastScannedCheckEl = document.getElementById('lastScannedCheck');
 
+  function setScanConfirmVisualState(isConfirmPending){
+  if(!startScan) return;
+
+  // Only show the yellow "confirm" state when the button is actually actionable
+  if(isConfirmPending && !startScan.disabled){
+    startScan.classList.add('confirmPending');
+  }else{
+    startScan.classList.remove('confirmPending');
+  }
+}
 
 function renderLastScannedUI(){
   if(!lastScannedValueEl || !dismissLastScannedBtn) return;
@@ -1094,6 +1135,7 @@ function renderLastScannedUI(){
     // (your existing scan start/stop logic will also control this)
     if(stopScan && !armed) stopScan.disabled = true;
   }
+  setScanConfirmVisualState(!!pendingScanText);
 }
 
 function setPendingScan(text){
@@ -1512,11 +1554,14 @@ if ('serviceWorker' in navigator) {
   }
 }
 
-  setBanner('ok', 'Choose a mode to begin');
-  setIdleBanner();
-  banner.className = 'banner';
-  banner.textContent = IDLE_BANNER_TEXT;
-  updateUI();
+// Auto-start in Audit mode
+auditSection.hidden = false;
+scanSection.hidden = true; // hide scan until inventory is loaded
+
+expectedSummary.textContent = 'Upload the Excel you were emailed. Then scan everything on the truck.';
+
+setIdleBanner();
+updateUI();
 
 /* Reload warning dismiss */
 const reloadWarning = document.getElementById('reloadWarning');

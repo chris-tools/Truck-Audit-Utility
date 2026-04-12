@@ -293,9 +293,25 @@ label.fileBtn {
   cursor: pointer;
   padding: 14px 18px;
   border-radius: 14px;
+
+  background: var(--blue2);
+  color: #ffffff;
+
   border: 1px solid rgba(0,0,0,0.18);
-  background: #ffffff;
-  box-shadow: 0 7px 21px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 7px 21px rgba(0, 0, 0, 0.28);
+
+  transition: all 0.15s ease;
+}
+label.fileBtn.disabled {
+  background: #9ca3af;
+  color: #e5e7eb;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+label.fileBtn:not(.disabled):hover {
+  background: var(--blue);
+  transform: translateY(-1px);
 }
 label.fileBtn span {
   pointer-events: none;
@@ -542,4 +558,15 @@ main.container{
   text-align: center;
   margin-top: 18px;
   opacity: 0.9;
+}
+/* ===== Scan Button Confirm State (Yellow Hold) ===== */
+#startScan.confirmPending{
+  background: #f2c200;
+  border-color: #d3a800;
+  color: #0b2a6f;   /* matches your brand blue text */
+  transform: scale(1.04);
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
 }

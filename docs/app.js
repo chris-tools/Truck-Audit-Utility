@@ -2,10 +2,10 @@
   const $ = (id)=>document.getElementById(id);
 
   const modeAuditBtn = $('modeAuditBtn');
-  const modeQuickBtn = $('modeQuickBtn');
   const auditSection = $('auditSection');
   const scanSection = $('scanSection');
   const excelFile = $('excelFile');
+  const fileBtn = $('fileBtn');
   const fileMeta = $('fileMeta');
   const colPicker = $('colPicker');
   const serialCol = $('serialCol');
@@ -30,6 +30,7 @@
   const addManual = $('addManual');
 
   const copyNextMissing = $('copyNextMissing');
+  const TAU_EMAIL = 'chris.gagnon@fidium.com';
   const copyAllMissing = $('copyAllMissing');
   const copyAllScanned = $('copyAllScanned');
 
@@ -41,7 +42,7 @@
   const extraCount = $('extraCount');
 
 
-  let mode = null; // 'audit' | 'quick'
+  let mode = 'audit';
   let expected = new Map(); // serial -> {part}
   let scanned = new Set();  // unique
   let extras = new Set();
@@ -299,14 +300,14 @@ function isCenteredDecode(result, videoEl, tolerance = 0.22){
 
     if (copyAllScanned) copyAllScanned.disabled = scanned.size === 0;
 
-    if(mode === 'audit'){
-      regenerateMissingQueue();
-      copyNextMissing.disabled = missingQueue.length === 0;
-      if(copyAllMissing) copyAllMissing.disabled = missingQueue.length === 0;
-   } else {
-  copyNextMissing.disabled = true;
-  if(copyAllMissing) copyAllMissing.disabled = true;
-}
+const hasTech = techNameField && techNameField.value.trim().length > 0;
+const hasContractor = contractorField && contractorField.value.trim().length > 0;
+
+// Enable copy button when required fields are filled
+copyNextMissing.disabled = !(hasTech && hasContractor);
+
+// Keep this disabled (we're phasing it out anyway)
+if(copyAllMissing) copyAllMissing.disabled = true;
 
     const scannedArr = Array.from(scanned).sort();
     const extraArr = Array.from(extras).sort();
@@ -362,37 +363,35 @@ function isCenteredDecode(result, videoEl, tolerance = 0.22){
   }
 }
 
-  function updateModeButtonsState() {
+function updateModeButtonsState() {
   const hasTech = techNameField && techNameField.value.trim().length > 0;
   const hasContractor = contractorField && contractorField.value.trim().length > 0;
 
-  const canChooseMode = hasTech && hasContractor;
+  const canProceed = hasTech && hasContractor;
 
-  if (modeAuditBtn) modeAuditBtn.disabled = !canChooseMode;
-  if (modeQuickBtn) modeQuickBtn.disabled = !canChooseMode;
+  if (modeAuditBtn) modeAuditBtn.disabled = !canProceed;
+
+  // NEW: control file button
+  if (fileBtn) {
+    fileBtn.classList.toggle('disabled', !canProceed);
+  }
+
+  if (excelFile) {
+    excelFile.disabled = !canProceed;
+  }
 }
 
   // Export button
 function updateExportButtonState() {
   const exportAuditBtn = document.getElementById('exportCsv');
-  const exportFullBtn  = document.getElementById('exportFullCsv');
-
   const hasExpected = expected && expected.size > 0;
   const hasScans = scanned && scanned.size > 0;
 
   const hasTech = techNameField && techNameField.value.trim().length > 0;
   const hasContractor = contractorField && contractorField.value.trim().length > 0;
-
-  // Export Audit Results (your existing audit export)
-  // Keep this strict: audit mode + excel + tech + contractor
-  const canExportAudit = (mode === 'audit' && hasExpected && hasTech && hasContractor);
-
-  // Export Full Report (Reference)
-  // Works if tech+contractor AND (excel imported OR at least one scan)
-  const canExportFull = (hasTech && hasContractor && (hasExpected || hasScans));
+  const canExportAudit = (hasExpected && hasTech && hasContractor);
 
   if (exportAuditBtn) exportAuditBtn.disabled = !canExportAudit;
-  if (exportFullBtn)  exportFullBtn.disabled  = !canExportFull;
 }
 
 
@@ -570,25 +569,7 @@ async function parseCsv(file){
     handledMissing = new Set(); // reset handled when inventory reloads
   }
 
-  modeAuditBtn.addEventListener('click', ()=>{
-    mode = 'audit';
-    resetSession();
-    auditSection.hidden = false;
-    scanSection.hidden = false;
-    expectedSummary.textContent = 'Upload the Excel you were emailed. Then scan everything on the truck.';
-    setBanner('ok', 'Audit mode ready');
-    updateUI();
-  });
-
-  modeQuickBtn.addEventListener('click', ()=>{
-    mode = 'quick';
-    resetSession();
-    auditSection.hidden = true;
-    scanSection.hidden = false;
-    setBanner('ok', 'Quick Scan mode ready');
-    updateUI();
-  });
-// ===== Excel date normalization helper =====
+ // ===== Excel date normalization helper =====
 function formatExcelDateCell(v) {
   if (v === null || v === undefined) return '';
 
@@ -665,6 +646,8 @@ function formatExcelDateCell(v) {
   `Inventory loaded. Expected serials: ${expected.size}.`;
 
     setBanner('ok', 'CSV loaded');
+    regenerateMissingQueue();
+    scanSection.hidden = false;
     updateUI();
     updateExportButtonState();
   } catch(e){
@@ -700,8 +683,9 @@ function formatExcelDateCell(v) {
   expectedSummary.textContent =
   `Inventory loaded. Expected serials: ${expected.size}.`;
 
-    updateUI();
-    updateExportButtonState();
+  regenerateMissingQueue();
+  updateUI();
+  updateExportButtonState();
   } catch(e){
     expectedSummary.textContent = 'Could not read Excel: ' + e.message;
   }
@@ -1113,14 +1097,9 @@ armDelayId = setTimeout(()=>{
 }
 
   copyNextMissing.addEventListener('click', ()=>{
-    if(mode !== 'audit') return;
-    regenerateMissingQueue();
-    if(missingQueue.length === 0) return;
-    const next = missingQueue[0];
-    handledMissing.add(next);
-    copyText(next);
-    updateUI();
-  });
+  copyText(TAU_EMAIL);
+  setBanner('ok', 'Email copied');
+});
   // ===== Last Scanned (pending commit) =====
 let pendingScanText = ''; // holds scan waiting to be committed
 
@@ -1575,11 +1554,14 @@ if ('serviceWorker' in navigator) {
   }
 }
 
-  setBanner('ok', 'Choose a mode to begin');
-  setIdleBanner();
-  banner.className = 'banner';
-  banner.textContent = IDLE_BANNER_TEXT;
-  updateUI();
+// Auto-start in Audit mode
+auditSection.hidden = false;
+scanSection.hidden = true; // hide scan until inventory is loaded
+
+expectedSummary.textContent = 'Upload the Excel you were emailed. Then scan everything on the truck.';
+
+setIdleBanner();
+updateUI();
 
 /* Reload warning dismiss */
 const reloadWarning = document.getElementById('reloadWarning');

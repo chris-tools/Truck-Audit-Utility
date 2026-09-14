@@ -1240,57 +1240,8 @@ const exportBtn = document.getElementById('exportCsv');
 if (exportBtn) {
   exportBtn.addEventListener('click', async () => {
     if (exportBtn.disabled) return;
-
-    // Auditor export only works in Audit mode with an uploaded Excel
-    if (mode !== 'audit' || !expected || expected.size === 0) {
-      setBanner('warn', 'Upload an Excel file to export missing items.');
-      updateExportButtonState();
-      return;
-    }
-
-    // Make sure Missing is current
-    regenerateMissingQueue();
-
-    const techName = techNameField.value.trim();
-    const contractorName = contractorField.value.trim();
-
-
-    // Date (MM/DD/YYYY)
-    const d = new Date();
-    const auditDate =
-      String(d.getMonth() + 1).padStart(2, '0') + '/' +
-      String(d.getDate()).padStart(2, '0') + '/' +
-      d.getFullYear();
-
-    // Auditor CSV columns:
-    // Date, Technician Name, Contractor Name, Serial Number, Equipment Status, Notes
-    const rows = [];
-    rows.push(['Notes (Internal)','Date','Technician Name','Contractor Name or Garage','Serial Number','Equipment Status','Notes']);
-
-    const tech = techName.trim();
-    const contractor = contractorName.trim();
-
-    // Missing-only export; status intentionally set to Installed
-    for (const s of missingQueue) {
-      rows.push(['', auditDate, tech, contractor, s, 'Installed', '']);
-    }
-
-    // CSV encode
-    const esc = (v) => {
-      const s = String(v ?? '');
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-
-    const csv = rows.map(r => r.map(esc).join(',')).join('\n');
-
-    // Filename
-    const safeDate = new Date().toISOString().slice(0,10); // YYYY-MM-DD
-    const safeTech = tech.replace(/[^A-Za-z0-9_-]+/g, '_');
-    const safeContractor = contractor.replace(/[^A-Za-z0-9_-]+/g, '_');
-    const filename = `TAU_Auditor_${safeDate}_${safeTech}_${safeContractor}.csv`;
-    
-    await shareOrDownloadCsv(csv, filename);
-
+    // Reuse the existing full-report XLSX exporter.
+    await exportFullReportXlsx();
   });
 }
 
@@ -1483,7 +1434,11 @@ async function exportFullReportXlsx() {
   if (navigator.share) {
     try {
       const file = new File([blob], filename, { type: blob.type });
-      await navigator.share({ files: [file], title: filename, text: 'TAU Full Report' });
+      await navigator.share({
+        files: [file],
+        title: filename,
+        text: `TAU Full Audit Results:\n${tech}\n\nPlease review the attached audit report for Found, Missing, and Extra equipment.`
+      });
       return;
     } catch (e) {
       // fall through to download

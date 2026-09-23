@@ -30,7 +30,7 @@
   const addManual = $('addManual');
 
   const copyNextMissing = $('copyNextMissing');
-  const TAU_EMAIL = 'chris.gagnon@fidium.com';
+  const TAU_EMAIL = 'truck.audit@fidium.com';
   const copyAllMissing = $('copyAllMissing');
   const copyAllScanned = $('copyAllScanned');
 
